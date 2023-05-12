@@ -9,11 +9,7 @@ def find_data_files_in_user_installations(directory):
         for p in site.getusersitepackages()
     ]
 
-    for p in possible_paths:
-        if os.path.isdir(p):
-            return p
-
-    return None
+    return next((p for p in possible_paths if os.path.isdir(p)), None)
 
 
 def find_data_files_in_sys_installations(directory):
@@ -21,11 +17,7 @@ def find_data_files_in_sys_installations(directory):
         os.path.normpath(os.path.join(p, "../../..", directory))
         for p in site.getsitepackages()
     ]
-    for p in possible_paths:
-        if os.path.isdir(p):
-            return p
-
-    return None
+    return next((p for p in possible_paths if os.path.isdir(p)), None)
 
 
 def find_data_files(directory, user_inst_first=True):

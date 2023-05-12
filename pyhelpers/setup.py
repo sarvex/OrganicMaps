@@ -67,10 +67,8 @@ def findsource(object):
     if inspect.isframe(object):
         # XXX: can this ever be false?
         globals_dict = object.f_globals
-    else:
-        module = getmodule(object, file)
-        if module:
-            globals_dict = module.__dict__
+    elif module := getmodule(object, file):
+        globals_dict = module.__dict__
     lines = linecache.getlines(file, globals_dict)
     if not lines:
         raise IOError('could not get source code')
@@ -86,21 +84,19 @@ def findsource(object):
         # that's most probably not inside a function definition.
         candidates = []
         for i in range(len(lines)):
-            match = pat.match(lines[i])
-            if match:
+            if match := pat.match(lines[i]):
                 # if it's at toplevel, it's already the best one
                 if lines[i][0] == 'c':
                     return lines, i
                 # else add whitespace to candidate list
-                candidates.append((match.group(1), i))
-        if candidates:
-            # this will sort by whitespace, and by line number,
-            # less whitespace first
-            candidates.sort()
-            return lines, candidates[0][1]
-        else:
+                candidates.append((match[1], i))
+        if not candidates:
             raise IOError('could not find class definition')
 
+        # this will sort by whitespace, and by line number,
+        # less whitespace first
+        candidates.sort()
+        return lines, candidates[0][1]
     if ismethod(object):
         object = object.im_func
     if isfunction(object):
@@ -166,8 +162,7 @@ class BuildCommand(build, object):
             )
         self.build_base = os.path.relpath(
             os.path.join(
-                self.omim_builddir,
-                '{}-builddir'.format(self.distribution.get_name()),
+                self.omim_builddir, f'{self.distribution.get_name()}-builddir'
             )
         )
         super(BuildCommand, self).finalize_options()
@@ -187,7 +182,7 @@ class BdistCommand(bdist, object):
             'build', ('omim_builddir', 'omim_builddir'),
         )
         self.dist_dir = os.path.join(
-            self.omim_builddir, '{}-dist'.format(self.distribution.get_name())
+            self.omim_builddir, f'{self.distribution.get_name()}-dist'
         )
         super(BdistCommand, self).finalize_options()
 
@@ -215,8 +210,7 @@ class EggInfoCommand(egg_info, object):
         )
         self.egg_base = os.path.relpath(
             os.path.join(
-                self.omim_builddir,
-                '{}-egg-info'.format(self.distribution.get_name()),
+                self.omim_builddir, f'{self.distribution.get_name()}-egg-info'
             )
         )
         mkpath(self.egg_base)
@@ -273,14 +267,11 @@ class BuildBoostPythonCommand(Command, object):
         )
 
     def get_boost_python_libname(self):
-        return 'boost_python{}{}'.format(
-            sys.version_info.major, sys.version_info.minor
-        )
+        return f'boost_python{sys.version_info.major}{sys.version_info.minor}'
 
     def get_boost_config_path(self):
         return os.path.join(
-            self.omim_builddir,
-            'python{}-config.jam'.format(get_python_version()),
+            self.omim_builddir, f'python{get_python_version()}-config.jam'
         )
 
     def configure_omim(self):
@@ -291,17 +282,12 @@ class BuildBoostPythonCommand(Command, object):
         mkpath(self.omim_builddir)
         with open(self.get_boost_config_path(), 'w') as f:
             f.write(
-                'using python : {} : {} : {} ;\n'.format(
-                    get_python_version(),
-                    sys.executable,
-                    get_python_inc(),
-                )
+                f'using python : {get_python_version()} : {sys.executable} : {get_python_inc()} ;\n'
             )
 
     def get_boost_python_builddir(self):
         return os.path.join(
-            self.omim_builddir,
-            'boost-build-python{}'.format(get_python_version()),
+            self.omim_builddir, f'boost-build-python{get_python_version()}'
         )
 
     def clean(self):
@@ -309,10 +295,10 @@ class BuildBoostPythonCommand(Command, object):
             spawn(
                 [
                     './b2',
-                    '--user-config={}'.format(self.get_boost_config_path()),
+                    f'--user-config={self.get_boost_config_path()}',
                     '--with-python',
-                    'python={}'.format(get_python_version()),
-                    '--build-dir={}'.format(self.get_boost_python_builddir()),
+                    f'python={get_python_version()}',
+                    f'--build-dir={self.get_boost_python_builddir()}',
                     '--clean',
                 ]
             )
@@ -325,24 +311,21 @@ class BuildBoostPythonCommand(Command, object):
             spawn(
                 [
                     './b2',
-                    '--user-config={}'.format(self.get_boost_config_path()),
+                    f'--user-config={self.get_boost_config_path()}',
                     '--with-python',
-                    'python={}'.format(get_python_version()),
-                    '--build-dir={}'.format(self.get_boost_python_builddir()),
+                    f'python={get_python_version()}',
+                    f'--build-dir={self.get_boost_python_builddir()}',
                     'cxxflags="-fPIC"',
                 ]
             )
 
     def run(self):
         lib_path = os.path.join(
-            BOOST_LIBRARYDIR, 'lib{}.a'.format(self.get_boost_python_libname())
+            BOOST_LIBRARYDIR, f'lib{self.get_boost_python_libname()}.a'
         )
         if os.path.exists(lib_path) and not self.force:
             log.info(
-                'Boost_python library `{}` for current '
-                'python version already present, skipping build'.format(
-                    lib_path
-                )
+                f'Boost_python library `{lib_path}` for current python version already present, skipping build'
             )
             return
 
@@ -380,9 +363,9 @@ class BuildOmimBindingCommand(build_ext, object):
                     cmake,
                     '-DSKIP_DESKTOP=1',
                     '-DPYBINDINGS=ON',
-                    '-DPYBINDINGS_VERSION={}'.format(get_version()),
-                    '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
-                    '-DPYTHON_INCLUDE_DIR={}'.format(get_python_inc()),
+                    f'-DPYBINDINGS_VERSION={get_version()}',
+                    f'-DPYTHON_EXECUTABLE={sys.executable}',
+                    f'-DPYTHON_INCLUDE_DIR={get_python_inc()}',
                     OMIM_ROOT,
                 ]
             )
@@ -400,7 +383,7 @@ class BuildOmimBindingCommand(build_ext, object):
 
         mkpath(self.build_lib)
         copy_file(
-            os.path.join(self.omim_builddir, '{}.so'.format(ext.name)),
+            os.path.join(self.omim_builddir, f'{ext.name}.so'),
             self.get_ext_fullpath(ext.name),
         )
 
@@ -455,18 +438,16 @@ def get_version():
     for path, varname in VERSIONS_LOCATIONS.items():
         with open(os.path.join(OMIM_ROOT, os.path.normpath(path))) as f:
             for line in f:
-                match = re.search(
-                    r'^\s*{}\s*=\s*(?P<version>.*)'.format(varname),
-                    line.strip(),
-                )
-                if match:
-                    versions.append(LooseVersion(match.group('version')))
+                if match := re.search(
+                    f'^\s*{varname}\s*=\s*(?P<version>.*)', line.strip()
+                ):
+                    versions.append(LooseVersion(match['version']))
                     break
     code_version = max(versions)
 
     env_version_addendum = os.environ.get('OMIM_SCM_VERSION', '')
 
-    return "{}{}".format(code_version, env_version_addendum)
+    return f"{code_version}{env_version_addendum}"
 
 
 def transform_omim_requirement(requirement, omim_package_version):
@@ -477,10 +458,8 @@ def transform_omim_requirement(requirement, omim_package_version):
                 index = i
                 break
 
-        requirement_without_version = requirement[0: index + 1]
-        requirement = "{}=={}".format(
-            requirement_without_version, omim_package_version
-        )
+        requirement_without_version = requirement[:index + 1]
+        requirement = f"{requirement_without_version}=={omim_package_version}"
     return requirement
 
 
@@ -517,7 +496,7 @@ def setup_omim_pybinding(
     ]
 
     setup(
-        name='omim-{}'.format(name),
+        name=f'omim-{name}',
         version=version,
         description=PYBINDINGS[name]['description'],
         author=author,
@@ -538,18 +517,20 @@ def setup_omim_pybinding(
             'egg_info': EggInfoCommand,
             'install': InstallCommand,
         },
-        classifiers=[
-            # Trove classifiers
-            # Full list:
-            # https://pypi.python.org/pypi?%3Aaction=list_classifiers
-            'License :: OSI Approved :: Apache Software License',
-            'Programming Language :: Python',
-            'Programming Language :: Python :: Implementation :: CPython',
-        ]
-        + [
-            'Programming Language :: Python :: {}'.format(supported_python)
-            for supported_python in supported_pythons
-        ],
+        classifiers=(
+            [
+                # Trove classifiers
+                # Full list:
+                # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+                'License :: OSI Approved :: Apache Software License',
+                'Programming Language :: Python',
+                'Programming Language :: Python :: Implementation :: CPython',
+            ]
+            + [
+                f'Programming Language :: Python :: {supported_python}'
+                for supported_python in supported_pythons
+            ]
+        ),
     )
 
 
@@ -557,7 +538,7 @@ if __name__ == '__main__':
     log.set_threshold(log.INFO)
 
     for binding in PYBINDINGS.keys():
-        log.info('Run {}:'.format(binding))
+        log.info(f'Run {binding}:')
         path = os.path.join(
             OMIM_ROOT, os.path.normpath(PYBINDINGS[binding]['path'])
         )

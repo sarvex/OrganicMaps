@@ -39,6 +39,6 @@ def init(borders_path=None):
             logger.error(str(e))
             return False
 
-        logger.info("{} was created.".format(borders_path))
+        logger.info(f"{borders_path} was created.")
 
     return True

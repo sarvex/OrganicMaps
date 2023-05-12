@@ -5,9 +5,7 @@ import sys
 
 
 def langs_order(lang):
-    if lang == 'en':
-        return '0'
-    return lang
+    return '0' if lang == 'en' else lang
 
 
 def read_strings(fin):
@@ -30,10 +28,10 @@ def from_csv(fin, fout, delim):
     r = csv.reader(fin, delimiter=delim)
     header = next(r)
     for row in r:
-        fout.write('[{}]\n'.format(row[0]))
+        fout.write(f'[{row[0]}]\n')
         for i, col in enumerate(map(str.strip, row)):
             if len(col) > 0 and i > 0:
-                fout.write('{} = {}\n'.format(header[i], col))
+                fout.write(f'{header[i]} = {col}\n')
         fout.write('\n')
 
 
@@ -73,9 +71,9 @@ def from_categories(fin, fout):
 
 def to_categories(fin, fout):
     for title, trans in read_strings(fin):
-        fout.write('{}\n'.format(title))
+        fout.write(f'{title}\n')
         for lang in sorted(trans.keys(), key=langs_order):
-            fout.write('{}:^{}\n'.format(lang, trans[lang]))
+            fout.write(f'{lang}:^{trans[lang]}\n')
         fout.write('\n')
 
 

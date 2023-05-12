@@ -22,5 +22,5 @@ setup(
         "06_code2000.ttf",
         "07_roboto_medium.ttf",
     ],
-    install_requires=["omim-data-files=={}".format(get_version())]
+    install_requires=[f"omim-data-files=={get_version()}"],
 )

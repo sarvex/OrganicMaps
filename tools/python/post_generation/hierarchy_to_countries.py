@@ -65,10 +65,7 @@ def collapse_single(root):
 
 
 def get_name(leaf):
-    if "n" in leaf:
-        return leaf["n"].lower()
-    else:
-        return leaf["id"].lower()
+    return leaf["n"].lower() if "n" in leaf else leaf["id"].lower()
 
 
 def sort_tree(root):
@@ -87,10 +84,10 @@ def parse_old_vs_new(old_vs_new_csv_path):
         for line in f:
             m = re.match(r"(.+?)\t(.+)", line.strip())
             assert m
-            if m.group(2) in oldvs:
-                oldvs[m.group(2)].append(m.group(1))
+            if m[2] in oldvs:
+                oldvs[m[2]].append(m[1])
             else:
-                oldvs[m.group(2)] = [m.group(1)]
+                oldvs[m[2]] = [m[1]]
     return oldvs
 
 
@@ -103,10 +100,10 @@ def parse_borders_vs_osm(borders_vs_osm_csv_path):
         for line in f:
             m = re.match(r"(.+)\t(\d)\t(.+)", line.strip())
             assert m
-            if m.group(1) in vsosm:
-                vsosm[m.group(1)].append(m.group(3))
+            if m[1] in vsosm:
+                vsosm[m[1]].append(m[3])
             else:
-                vsosm[m.group(1)] = [m.group(3)]
+                vsosm[m[1]] = [m[3]]
     return vsosm
 
 
@@ -119,10 +116,10 @@ def parse_countries_synonyms(countries_synonyms_csv_path):
         for line in f:
             m = re.match(r"(.+)\t(.+)", line.strip())
             assert m
-            if m.group(1) in countries_synonyms:
-                countries_synonyms[m.group(1)].append(m.group(2))
+            if m[1] in countries_synonyms:
+                countries_synonyms[m[1]].append(m[2])
             else:
-                countries_synonyms[m.group(1)] = [m.group(2)]
+                countries_synonyms[m[1]] = [m[2]]
     return countries_synonyms
 
 
@@ -152,7 +149,7 @@ def hierarchy_to_countries(
         for line in f:
             m = re.match("( *)(.+)", line)
             assert m
-            depth = len(m.group(1))
+            depth = len(m[1])
             if last is not None:
                 lastd = last["d"]
                 del last["d"]
@@ -167,7 +164,7 @@ def hierarchy_to_countries(
                 g = stack.pop()
                 if len(g["g"]) > 0:
                     stack[-1]["g"].append(g)
-            items = m.group(2).split(";")
+            items = m[2].split(";")
             last = CountryDict({"id": items[0], "d": depth})
             if items[0] in oldvs:
                 last["old"] = oldvs[items[0]]

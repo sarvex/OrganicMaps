@@ -135,7 +135,7 @@ def find_files(url) -> List[AnyStr]:
         links = bs.findAll("a", href=True)
         for link in links:
             href = link["href"]
-            if href == "./" or href == "../":
+            if href in ["./", "../"]:
                 continue
 
             new_url = urljoin(url, href)
@@ -151,7 +151,7 @@ def find_files(url) -> List[AnyStr]:
             f.replace(parse_result.path, "")
             for f in files_list_file_scheme(parse_result.path)
         ]
-    if parse_result.scheme == "http" or parse_result.scheme == "https":
+    if parse_result.scheme in ["http", "https"]:
         return [f.replace(url, "") for f in files_list_http_scheme(url)]
 
     assert False, parse_result
@@ -196,12 +196,9 @@ def make_symlink(target: AnyStr, link_name: AnyStr):
     try:
         os.symlink(target, link_name)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            if os.path.islink(link_name):
-                link = os.readlink(link_name)
-                if os.path.abspath(target) != os.path.abspath(link):
-                    raise e
-            else:
+        if e.errno == errno.EEXIST and os.path.islink(link_name):
+            link = os.readlink(link_name)
+            if os.path.abspath(target) != os.path.abspath(link):
                 raise e
         else:
             raise e

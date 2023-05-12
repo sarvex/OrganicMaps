@@ -548,7 +548,7 @@ class Env:
         logger.info("Check osm tools ...")
         if not create_if_not_exist_path(path):
             tmp_paths = [os.path.join(path, t) for t in osm_tool_names]
-            if all([is_executable(t) for t in tmp_paths]):
+            if all(is_executable(t) for t in tmp_paths):
                 osm_tool_paths = dict(zip(osm_tool_names, tmp_paths))
                 logger.info(f"Osm tools found - {', '.join(osm_tool_paths.values())}")
                 return osm_tool_paths

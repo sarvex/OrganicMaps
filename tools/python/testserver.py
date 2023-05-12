@@ -197,10 +197,7 @@ class PostHandler(BaseHTTPRequestHandler, ResponseProviderMixin):
 
 
     def prepare_headers(self):
-        ret = dict()
-        for h in self.headers:
-            ret[h.lower()] = self.headers.get(h)
-        return ret
+        return {h.lower(): self.headers.get(h) for h in self.headers}
 
 
     def got_pinged(self):

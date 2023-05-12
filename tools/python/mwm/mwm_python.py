@@ -193,13 +193,13 @@ class FeaturePython(mi.Feature):
                 self._rank = read_uint(self.mwm.file, 1)
             elif geom_type == GeomType.LINE:
                 self._road_number = read_string(self.mwm.file)
-            elif geom_type == GeomType.AREA or geom_type == GeomType.POINT_EX:
+            elif geom_type in [GeomType.AREA, GeomType.POINT_EX]:
                 self._house_number = read_numeric_string(self.mwm.file)
 
         self._geom_type = mi.GeomType.undefined
         self._geometry = []
 
-        if geom_type == GeomType.POINT or geom_type == GeomType.POINT_EX:
+        if geom_type in [GeomType.POINT, GeomType.POINT_EX]:
             self._geometry = mi.GeomType.point
             geometry = [
                 read_coord(self.mwm.file, self.mwm.base_point, self.mwm.coord_size)
@@ -410,8 +410,7 @@ def mwm_unshuffle(x: int) -> int:
     x = ((x & 0x22222222) << 1) | ((x >> 1) & 0x22222222) | (x & 0x99999999)
     x = ((x & 0x0C0C0C0C) << 2) | ((x >> 2) & 0x0C0C0C0C) | (x & 0xC3C3C3C3)
     x = ((x & 0x00F000F0) << 4) | ((x >> 4) & 0x00F000F0) | (x & 0xF00FF00F)
-    x = ((x & 0x0000FF00) << 8) | ((x >> 8) & 0x0000FF00) | (x & 0xFF0000FF)
-    return x
+    return ((x & 0x0000FF00) << 8) | ((x >> 8) & 0x0000FF00) | (x & 0xFF0000FF)
 
 
 def mwm_bitwise_split(v) -> mi.Point:

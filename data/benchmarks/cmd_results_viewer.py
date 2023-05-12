@@ -11,18 +11,17 @@ bench_cfg = {}
 for l in lns1:
     c_name = l[1]
     is_country = (len(l) == 3)
-    bench_cfg[l[1]] = []
-    bench_cfg[l[1]].append(is_country) 
+    bench_cfg[l[1]] = [is_country]
     if len(l) > 0:
-        if not is_country:
+        if is_country:
+            bench_cfg[c_name].append(int(l[2]))
+
+        else:
             bench_cfg[c_name].append(float(l[2]))
             bench_cfg[c_name].append(float(l[3]))
             bench_cfg[c_name].append(float(l[4]))
             bench_cfg[c_name].append(float(l[5]))
             bench_cfg[c_name].append(int(l[6]))
-        else:
-            bench_cfg[c_name].append(int(l[2]))
-
 f = open(sys.argv[1], "r")
 lns = f.readlines()
 
@@ -33,12 +32,8 @@ def scale_level(r):
     v = (dx + dy) / 2.0
 
     l = math.log(v) / math.log(2.0) + 1
-    if l > 17:
-        l = 17
-    if l < 0:
-        return 0
-    else:
-        return math.floor(l + 0.5)
+    l = min(l, 17)
+    return 0 if l < 0 else math.floor(l + 0.5)
 
 lns = [l.split(" ") for l in lns]
 

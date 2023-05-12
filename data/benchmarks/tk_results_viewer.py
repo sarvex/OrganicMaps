@@ -56,22 +56,20 @@ class BenchmarkResultsFrame(Frame):
                     for bench_name in self.rev[rev_name][start_time].keys():
                         if bench_name not in self.bench_cfg:
                             s = "\t\t%s [config info not found]\n" % (bench_name)
-                            self.resultsView.insert(END, s)
                         else:
                             cfg_info = self.bench_cfg[bench_name]
                             if not cfg_info[0]:
                                 s = "\t\t%s [%s %s %s %s], endScale=%d\n" % \
-                                    (bench_name, cfg_info[1], cfg_info[2], cfg_info[3], cfg_info[4], cfg_info[5])
-                                self.resultsView.insert(END, s)
+                                        (bench_name, cfg_info[1], cfg_info[2], cfg_info[3], cfg_info[4], cfg_info[5])
                             else:
                                 s = "\t\t%s endScale=%d\n" % \
-                                    (bench_name, cfg_info[1])
-                                self.resultsView.insert(END, s)
+                                        (bench_name, cfg_info[1])
+                        self.resultsView.insert(END, s)
                         k = self.rev[rev_name][start_time][bench_name].keys()
                         k.sort()
                         for scale_level in k:
                             s = "\t\t\t scale: %d, duration: %f\n" % \
-                                (scale_level, self.rev[rev_name][start_time][bench_name][scale_level])
+                                    (scale_level, self.rev[rev_name][start_time][bench_name][scale_level])
                             self.resultsView.insert(END, s)
 
             self.resultsView.insert(END, "-------------------------------------------------------------------\n")
@@ -92,18 +90,17 @@ class BenchmarkResultsFrame(Frame):
         for l in lns1:
             c_name = l[1]
             is_country = (len(l) == 3)
-            self.bench_cfg[l[1]] = []
-            self.bench_cfg[l[1]].append(is_country)
+            self.bench_cfg[l[1]] = [is_country]
             if len(l) > 0:
-                if not is_country:
+                if is_country:
+                    self.bench_cfg[c_name].append(int(l[2]))
+
+                else:
                     self.bench_cfg[c_name].append(float(l[2]))
                     self.bench_cfg[c_name].append(float(l[3]))
                     self.bench_cfg[c_name].append(float(l[4]))
                     self.bench_cfg[c_name].append(float(l[5]))
                     self.bench_cfg[c_name].append(int(l[6]))
-                else:
-                    self.bench_cfg[c_name].append(int(l[2]))
-
         # reading results file
 
         f = open(results_file, "r")
@@ -153,10 +150,9 @@ class BenchmarkResultsFrame(Frame):
                 if is_session:
                     self.completion_status.append(0)
                     is_session = False
-                else:
-                    if cur_start_time is not None:
-                        # unknown session type
-                        self.completion_status.append(2)
+                elif cur_start_time is not None:
+                    # unknown session type
+                    self.completion_status.append(2)
 
                 cur_start_time = start_time
                 self.start_time_list.append(cur_start_time)
@@ -192,11 +188,7 @@ class BenchmarkResultsFrame(Frame):
 
         self.start_time_pairs.sort(less_start_time)
 
-        # updating resultList with names and completion status
-
-        i = 0
-
-        for e in self.start_time_pairs:
+        for i, e in enumerate(self.start_time_pairs):
             self.resultsList.insert(END, e[0])
             if e[1] == 0:
                 self.resultsList.itemconfig(i, fg="red")
@@ -204,7 +196,6 @@ class BenchmarkResultsFrame(Frame):
                 self.resultsList.itemconfig(i, fg="blue")
             elif e[1] == 2:
                 self.resultsList.itemconfig(i, fg="green")
-            i += 1
 
     def hasTraceAttachement(self, start_time):
         return self.traceAttachementFile(start_time) is not None
@@ -216,20 +207,25 @@ class BenchmarkResultsFrame(Frame):
         trace_files = [t for t in os.listdir(os.path.join(os.curdir, self.resultsDir)) if t.endswith(".trace")]
         sst = self.traceAttachementName(start_time)
         for tf in trace_files:
-            stf = tf[0:-6].replace("_", "").replace(":", "").replace("-", "")
+            stf = tf[:-6].replace("_", "").replace(":", "").replace("-", "")
             if stf == sst:
                 return tf
 
     def deleteTraceAttachement(self, start_time):
         sst = self.traceAttachementName(start_time)
-        if tkMessageBox.askokcancel("Profiler results found", "Delete " + self.traceAttachementFile(start_time)):
+        if tkMessageBox.askokcancel(
+            "Profiler results found",
+            f"Delete {self.traceAttachementFile(start_time)}",
+        ):
             shutil.rmtree(self.traceAttachementFile(start_time))
 
     def removeRecord(self, event):
         idx = self.resultsList.nearest(event.y)
         start_time = self.resultsList.get(idx)
 
-        if tkMessageBox.askokcancel("Are you sure?", "Delete results for " + start_time + " session?"):
+        if tkMessageBox.askokcancel(
+            "Are you sure?", f"Delete results for {start_time} session?"
+        ):
             lns = open(self.results_file, "r").readlines()
             lns = [l for l in lns if l.find(start_time) == -1]
             open(self.results_file, "w").writelines(lns)

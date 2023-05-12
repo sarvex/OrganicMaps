@@ -28,7 +28,7 @@ TAR_LZMA_PATH = os.path.join(DATA_PATH, "borders.tar.xz")
 
 class BuildCmd(build, object):
     def run(self):
-        log.info("Creating {}".format(TAR_LZMA_PATH))
+        log.info(f"Creating {TAR_LZMA_PATH}")
         tar_stream = BytesIO()
         borders_path = os.path.join(DATA_PATH, "borders")
         with chdir(borders_path):
@@ -46,7 +46,7 @@ class BuildCmd(build, object):
 class CleanCmd(clean, object):
     def run(self):
         if os.path.exists(TAR_LZMA_PATH):
-            log.info("Removing {}".format(TAR_LZMA_PATH))
+            log.info(f"Removing {TAR_LZMA_PATH}")
             os.remove(TAR_LZMA_PATH)
 
         super(CleanCmd, self).run()
@@ -59,5 +59,5 @@ setup(
     package_dir={"borders": ""},
     packages=["borders"],
     cmdclass={"build": BuildCmd, "clean": CleanCmd},
-    install_requires=["omim-data-files=={}".format(get_version())]
+    install_requires=[f"omim-data-files=={get_version()}"],
 )

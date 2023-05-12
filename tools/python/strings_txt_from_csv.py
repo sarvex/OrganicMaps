@@ -34,8 +34,8 @@ for key in column_names:
         continue
 
     translations = resulting_dict[key]
-    print("  {}".format(key))
+    print(f"  {key}")
     for translation in translations:
-        print("    {}".format(translation))
+        print(f"    {translation}")
 
     print("")

@@ -20,19 +20,17 @@ road_delta = 200
 WORKERS = 16
 
 def get_way_ids(point1, point2, server):
-    url = "http://{0}/wayid?z=18&loc={1},{2}&loc={3},{4}".format(server, point1[0], point1[1], point2[0], point2[1])
-    request = urlopen(url)
-    data = json.load(request)
-    if "way_ids" in data:
-        return data["way_ids"]
-    return []
+  url = "http://{0}/wayid?z=18&loc={1},{2}&loc={3},{4}".format(server, point1[0], point1[1], point2[0], point2[1])
+  request = urlopen(url)
+  data = json.load(request)
+  return data["way_ids"] if "way_ids" in data else []
 
 def each_to_each(points):
-    result = []
-    for i in range(len(points)):
-        for j in range(len(points) - i - 1):
-            result.append((points[i], points[j + i + 1]))
-    return result
+  result = []
+  for i in range(len(points)):
+    result.extend(
+        (points[i], points[j + i + 1]) for j in range(len(points) - i - 1))
+  return result
 
 def load_towns(path):
     result = []
@@ -93,10 +91,10 @@ qtasks = Queue()
 capitals_list = set()
 towns_list = set()
 
-for i in range(WORKERS):
-    t=Thread(target=parallel_worker, args=(qtasks, capitals_list, towns_list))
-    t.daemon = True
-    t.start()
+for _ in range(WORKERS):
+  t=Thread(target=parallel_worker, args=(qtasks, capitals_list, towns_list))
+  t.daemon = True
+  t.start()
 
 for task in tasks:
     qtasks.put(task)

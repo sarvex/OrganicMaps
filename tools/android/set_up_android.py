@@ -53,16 +53,14 @@ def query_path(title, option, default, subpath):
   searchHint = ', "s" to search'
   while True:
     path = input('Path to {0}{1} [{2}]:'.format(title, searchHint, default)) or default
-    if len(searchHint) > 0 and path.lower().strip() == 's':
-      found = find_recursive(os.path.expanduser('~'), subpath)
-      if found:
-        print('Found {0} at "{1}".'.format(title, found))
-        default = found
-      else:
-        print('{0} not found.'.format(title))
-      searchHint = ''
-    else:
+    if len(searchHint) <= 0 or path.lower().strip() != 's':
       break
+    if found := find_recursive(os.path.expanduser('~'), subpath):
+      print('Found {0} at "{1}".'.format(title, found))
+      default = found
+    else:
+      print('{0} not found.'.format(title))
+    searchHint = ''
   return test_path(title, path, subpath)
 
 def write_local_properties(sdkDir):
@@ -90,7 +88,6 @@ if __name__ == '__main__':
   options, _ = parser.parse_args()
 
   sdkDirOld = read_local_properties()
-  sdkDir = query_path('Android SDK', options.sdk, sdkDirOld, ['platform-tools', 'adb'])
-
-  if sdkDir:
+  if sdkDir := query_path('Android SDK', options.sdk, sdkDirOld,
+                          ['platform-tools', 'adb']):
     write_local_properties(sdkDir)

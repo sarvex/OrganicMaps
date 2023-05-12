@@ -112,7 +112,7 @@ APPSTORE_LOCALES = [
 ]
 
 def error(path, message, *args, **kwargs):
-    print("❌", path + ":", message.format(*args, **kwargs), file=sys.stderr)
+    print("❌", f"{path}:", message.format(*args, **kwargs), file=sys.stderr)
     return False
 
 
@@ -146,7 +146,7 @@ def check_text(path, max, optional=False):
 def check_url(path,):
     (ok, url) = check_raw(path, 500)
     url = urlparse(url)
-    if not url.scheme in ('https', 'http'):
+    if url.scheme not in ('https', 'http'):
         ok = error(path, "invalid URL: {}", url)
     return done(path, ok)
 
@@ -165,25 +165,25 @@ def check_exact(path, expected):
 def check_android():
     ok = True
     flavor = 'android/src/fdroid/play/'
-    ok = check_url(flavor + 'contact-website.txt') and ok
-    ok = check_email(flavor + 'contact-email.txt') and ok
-    ok = check_exact(flavor + 'default-language.txt', 'en-US') and ok
-    for locale in glob.glob(flavor + 'listings/*/'):
+    ok = check_url(f'{flavor}contact-website.txt') and ok
+    ok = check_email(f'{flavor}contact-email.txt') and ok
+    ok = check_exact(f'{flavor}default-language.txt', 'en-US') and ok
+    for locale in glob.glob(f'{flavor}listings/*/'):
         if locale.split('/')[-2] not in GPLAY_LOCALES:
             ok = error(locale, 'unsupported locale') and ok
             continue
-        ok = check_text(locale + 'title.txt', 50) and ok
-        ok = check_text(locale + 'title-google.txt', 30) and ok
-        ok = check_text(locale + 'short-description.txt', 80) and ok
-        ok = check_text(locale + 'short-description-google.txt', 80, True) and ok
-        ok = check_text(locale + 'full-description.txt', 4000) and ok
-        ok = check_text(locale + 'full-description-google.txt', 4000, True) and ok
-        ok = check_text(locale + 'release-notes.txt', 499) and ok
-    for locale in glob.glob(flavor + 'release-notes/*/'):
+        ok = check_text(f'{locale}title.txt', 50) and ok
+        ok = check_text(f'{locale}title-google.txt', 30) and ok
+        ok = check_text(f'{locale}short-description.txt', 80) and ok
+        ok = check_text(f'{locale}short-description-google.txt', 80, True) and ok
+        ok = check_text(f'{locale}full-description.txt', 4000) and ok
+        ok = check_text(f'{locale}full-description-google.txt', 4000, True) and ok
+        ok = check_text(f'{locale}release-notes.txt', 499) and ok
+    for locale in glob.glob(f'{flavor}release-notes/*/'):
         if locale.split('/')[-2] not in GPLAY_LOCALES:
             ok = error(locale, 'unsupported locale') and ok
             continue
-        ok = check_text(locale + 'default.txt', 499) and ok
+        ok = check_text(f'{locale}default.txt', 499) and ok
     return ok
 
 
@@ -210,15 +210,15 @@ def check_ios():
         if locale.split('/')[-2] not in APPSTORE_LOCALES:
             ok = error(locale, "unsupported locale") and ok
             continue
-        ok = check_text(locale + "name.txt", 30) and ok
-        ok = check_text(locale + "subtitle.txt", 30) and ok
-        ok = check_text(locale + "promotional_text.txt", 170) and ok
-        ok = check_text(locale + "description.txt", 4000) and ok
-        ok = check_text(locale + "release_notes.txt", 4000) and ok
-        ok = check_text(locale + "keywords.txt", 100, True) and ok
-        ok = check_url(locale + "support_url.txt") and ok
-        ok = check_url(locale + "marketing_url.txt") and ok
-        ok = check_url(locale + "privacy_url.txt") and ok
+        ok = check_text(f"{locale}name.txt", 30) and ok
+        ok = check_text(f"{locale}subtitle.txt", 30) and ok
+        ok = check_text(f"{locale}promotional_text.txt", 170) and ok
+        ok = check_text(f"{locale}description.txt", 4000) and ok
+        ok = check_text(f"{locale}release_notes.txt", 4000) and ok
+        ok = check_text(f"{locale}keywords.txt", 100, True) and ok
+        ok = check_url(f"{locale}support_url.txt") and ok
+        ok = check_url(f"{locale}marketing_url.txt") and ok
+        ok = check_url(f"{locale}privacy_url.txt") and ok
     for locale in glob.glob('keywords/ios/*/'):
         if locale.split('/')[-2] not in APPSTORE_LOCALES:
             ok = error(locale, "unsupported locale") and ok

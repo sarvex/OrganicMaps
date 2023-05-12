@@ -43,7 +43,7 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 def exec_shell(executable, flags):
     spell = ["{0} {1}".format(executable, flags)]
-    logging.info("Spell: {}".format(spell[0]))
+    logging.info(f"Spell: {spell[0]}")
     process = subprocess.Popen(
         spell,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -103,22 +103,22 @@ class TestPermissions(unittest.TestCase):
         if not apks:
             raise IOError("Couldn't find an APK")
         apk_path = path.join(apk_path, apks[0])
-        logging.info("Using apk at {}".format(apk_path))
+        logging.info(f"Using apk at {apk_path}")
 
         return apk_path
 
 
     def get_property(self, prop, props_path):
         if not isfile(props_path):
-            raise IOError("Properties file does not exist: {}".format(props_path))
+            raise IOError(f"Properties file does not exist: {props_path}")
 
-        logging.info("local props: {}".format(props_path))
+        logging.info(f"local props: {props_path}")
         with open(props_path) as props:
             for line in filter(PROP_RE.match, props):
                 if line.startswith(prop):
                     return line.split("=")[1].strip()
 
-        raise IOError("Couldn't find property {} in file {}".format(prop, props_path))
+        raise IOError(f"Couldn't find property {prop} in file {props_path}")
 
 
     def find_aapt(self, build_tools_version):
@@ -126,15 +126,15 @@ class TestPermissions(unittest.TestCase):
         sdk_path = self.get_property("sdk.dir", local_props_path)
         aapt_path = self.find_aapt_in_platforms(sdk_path, build_tools_version)
 
-        logging.info("Using aapt at {}".format(aapt_path))
+        logging.info(f"Using aapt at {aapt_path}")
         return aapt_path
 
 
     def find_aapt_in_platforms(self, platforms_path, build_tools_version):
         aapts = {}
-        candidates = exec_shell("find", "{} -name aapt".format(platforms_path))
+        candidates = exec_shell("find", f"{platforms_path} -name aapt")
         for c in candidates:
-            if "build-tools/{}".format(build_tools_version) in c:
+            if f"build-tools/{build_tools_version}" in c:
                 return c
 
             try:
@@ -145,7 +145,7 @@ class TestPermissions(unittest.TestCase):
                 pass
 
         max_version = sorted(aapts.iterkeys(), reverse=True)[0]
-        logging.info("Max aapt version: {}".format(max_version))
+        logging.info(f"Max aapt version: {max_version}")
 
         return aapts[max_version]
 
@@ -169,12 +169,7 @@ class TestPermissions(unittest.TestCase):
     def get_failure_description(self):
         join_by_new_lines = lambda iterable: "\n".join(sorted(iterable))
 
-        return "Expected:\n{}\n\nActual:\n{}\n\nAdded:\n{}\n\nRemoved:\n{}".format(
-            join_by_new_lines(EXPECTED_PERMISSIONS),
-            join_by_new_lines(self.permissions),
-            join_by_new_lines(self.permissions - EXPECTED_PERMISSIONS),
-            join_by_new_lines(EXPECTED_PERMISSIONS - self.permissions)
-        )
+        return f"Expected:\n{join_by_new_lines(EXPECTED_PERMISSIONS)}\n\nActual:\n{join_by_new_lines(self.permissions)}\n\nAdded:\n{join_by_new_lines(self.permissions - EXPECTED_PERMISSIONS)}\n\nRemoved:\n{join_by_new_lines(EXPECTED_PERMISSIONS - self.permissions)}"
 
 
     def test_permissions(self):

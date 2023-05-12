@@ -59,7 +59,7 @@ def main():
     checker = check_and_get_checker(popularity_file)
     download_from_wikipedia_tags(wikipedia_file, output_dir, langs, checker)
     if wikidata_file is None:
-        log.warning(f"Wikidata file not set.")
+        log.warning("Wikidata file not set.")
     elif os.path.exists(wikidata_file):
         download_from_wikidata_tags(wikidata_file, output_dir, langs, checker)
     else:

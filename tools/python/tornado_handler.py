@@ -37,11 +37,7 @@ class MainHandler(tornado.web.RequestHandler, ResponseProviderMixin):
     
     
     def prepare_headers(self):
-        ret = dict()
-        for h in self.request.headers:
-            ret[h.lower()] = self.request.headers.get(h)
-            
-        return ret
+        return {h.lower(): self.request.headers.get(h) for h in self.request.headers}
     
     
     def init_vars(self):
@@ -69,7 +65,7 @@ class MainHandler(tornado.web.RequestHandler, ResponseProviderMixin):
     @staticmethod
     def suicide():
         tornado.ioloop.IOLoop.current().stop()
-        logging.info("The server's life has come to an end, pid: {}".format(os.getpid()))
+        logging.info(f"The server's life has come to an end, pid: {os.getpid()}")
 
 
     @staticmethod

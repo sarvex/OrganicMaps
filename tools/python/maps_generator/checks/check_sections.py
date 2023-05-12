@@ -44,12 +44,14 @@ def get_appeared_sections_check_set(
     old_path: str, new_path: str
 ) -> check.CompareCheckSet:
     return check.build_check_set_for_files(
-        f"Appeared sections check",
+        "Appeared sections check",
         old_path,
         new_path,
         ext=".mwm",
         do=lambda path: SectionNames(read_sections(path)),
-        diff_format=lambda s: ", ".join(f"{k}:{v.size}" for k, v in s.sections.items()),
+        diff_format=lambda s: ", ".join(
+            f"{k}:{v.size}" for k, v in s.sections.items()
+        ),
         format=lambda s: f"number of sections: {len(s.sections)}",
     )
 
@@ -58,13 +60,15 @@ def get_disappeared_sections_check_set(
     old_path: str, new_path: str
 ) -> check.CompareCheckSet:
     return check.build_check_set_for_files(
-        f"Disappeared sections check",
+        "Disappeared sections check",
         old_path,
         new_path,
         ext=".mwm",
         do=lambda path: SectionNames(read_sections(path)),
         op=lambda previous, current: previous - current,
-        diff_format=lambda s: ", ".join(f"{k}:{v.size}" for k, v in s.sections.items()),
+        diff_format=lambda s: ", ".join(
+            f"{k}:{v.size}" for k, v in s.sections.items()
+        ),
         format=lambda s: f"number of sections: {len(s.sections)}",
     )
 
@@ -104,10 +108,7 @@ def get_sections_size_check_set(old_path: str, new_path: str) -> check.CompareCh
     def make_do(section):
         def do(path):
             sections = read_sections(path)
-            if section not in sections:
-                return None
-
-            return sections[section].size
+            return None if section not in sections else sections[section].size
 
         return do
 

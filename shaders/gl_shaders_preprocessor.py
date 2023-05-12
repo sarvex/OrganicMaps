@@ -26,37 +26,34 @@ def format_shader_source_name(shader_file_name):
 
 
 def read_index_file(file_path, programs_order):
-    gpu_programs = dict()
+    gpu_programs = {}
     with open(file_path, 'r') as f:
-        index = 0
-        for line in f:
+        for index, line in enumerate(f):
             line_parts = line.strip().split()
             if len(line_parts) != 3:
-                print("Incorrect GPU program definition : " + line)
+                print(f"Incorrect GPU program definition : {line}")
                 exit(10)
 
             if line_parts[0] != programs_order[index]:
-                print("Incorrect GPU program order or name : " + line)
+                print(f"Incorrect GPU program order or name : {line}")
                 exit(11)
 
             vertex_shader = next(f for f in line_parts if f.endswith(VERTEX_SHADER_EXT))
             fragment_shader = next(f for f in line_parts if f.endswith(FRAG_SHADER_EXT))
 
             if not vertex_shader:
-                print("Vertex shader not found in GPU program definition : " + line)
+                print(f"Vertex shader not found in GPU program definition : {line}")
                 exit(12)
 
             if not fragment_shader:
-                print("Fragment shader not found in GPU program definition : " + line)
+                print(f"Fragment shader not found in GPU program definition : {line}")
                 exit(13)
 
-            if line_parts[0] in gpu_programs.keys():
-                print("More than one definition of %s gpu program" % line_parts[0])
+            if line_parts[0] in gpu_programs:
+                print(f"More than one definition of {line_parts[0]} gpu program")
                 exit(14)
 
             gpu_programs[index] = (vertex_shader, fragment_shader, line_parts[0])
-            index += 1
-
     return gpu_programs
 
 
@@ -88,18 +85,18 @@ def read_shaders_lib_file(file_path):
 
     common_index = shaders_lib_content.find(SHADERS_LIB_COMMON_PATTERN)
     if common_index < 0:
-        print("Common functions block is not found in " + file_path)
+        print(f"Common functions block is not found in {file_path}")
         exit(14)
     vs_index = shaders_lib_content.find(SHADERS_LIB_VS_PATTERN)
     if vs_index < 0:
-        print("Vertex shaders functions block is not found in " + file_path)
+        print(f"Vertex shaders functions block is not found in {file_path}")
         exit(15)
     fs_index = shaders_lib_content.find(SHADERS_LIB_FS_PATTERN)
     if fs_index < 0:
-        print("Vertex shaders functions block is not found in " + file_path)
+        print(f"Vertex shaders functions block is not found in {file_path}")
         exit(16)
     if not (common_index < vs_index < fs_index):
-        print("Order of functions block is incorrect in " + file_path)
+        print(f"Order of functions block is incorrect in {file_path}")
         exit(17)
 
     shaders_library[SHADERS_LIB_COMMON_INDEX] = shaders_lib_content[common_index:vs_index - 1]
@@ -110,7 +107,7 @@ def read_shaders_lib_file(file_path):
 
 
 def generate_shader_indexes(shaders):
-    return dict((v, k) for k, v in enumerate(shaders))
+    return {v: k for k, v in enumerate(shaders)}
 
 
 def write_definition_file(defines_file, generation_dir):
@@ -261,7 +258,9 @@ def write_implementation_file(programs_def, shader_index, shader_dir, impl_file,
 
 if __name__ == '__main__':
     if len(sys.argv) < 6:
-        print("Usage : " + sys.argv[0] + " <shader_dir> <index_file> <programs_file> <shaders_lib> <generation_dir> <generated_file>")
+        print(
+            f"Usage : {sys.argv[0]} <shader_dir> <index_file> <programs_file> <shaders_lib> <generation_dir> <generated_file>"
+        )
         exit(1)
 
     shader_dir = sys.argv[1]
@@ -269,8 +268,8 @@ if __name__ == '__main__':
     programs_file_name = sys.argv[3]
     shaders_lib_file = sys.argv[4]
     generation_dir = sys.argv[5]
-    defines_file = sys.argv[6] + ".hpp"
-    impl_file = sys.argv[6] + ".cpp"
+    defines_file = f"{sys.argv[6]}.hpp"
+    impl_file = f"{sys.argv[6]}.cpp"
 
     shaders = [file for file in os.listdir(shader_dir) if
                os.path.isfile(os.path.join(shader_dir, file)) and (

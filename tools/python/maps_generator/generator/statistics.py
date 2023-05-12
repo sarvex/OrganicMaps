@@ -91,7 +91,7 @@ def format_res(res, t):
         unit = "m"
     elif t == "area":
         unit = "m²"
-    elif t == "cnt" or t == "cnt_names":
+    elif t in ["cnt", "cnt_names"]:
         unit = "pc"
     else:
         raise ParseError(f"Unknown type {t}.")
@@ -117,10 +117,7 @@ def parse_time(time_str):
     if not parts:
         return
     parts = parts.groupdict()
-    time_params = {}
-    for name, param in parts.items():
-        if param:
-            time_params[name] = int(param)
+    time_params = {name: int(param) for name, param in parts.items() if param}
     return datetime.timedelta(**time_params)
 
 
@@ -171,15 +168,14 @@ def read_types(path: AnyStr) -> Dict[AnyStr, Dict]:
 def diff(new: Dict[AnyStr, Dict], old: Dict[AnyStr, Dict]) -> List:
     assert len(new) == len(old)
     lines = []
-    for key in new:
+    for key, value in new.items():
         o = old[key]["quantity"]
         n = new[key]["quantity"]
         rel = 0
         if o != 0.0:
             rel = int(((n - o) / o) * 100)
-        else:
-            if n != 0.0:
-                rel = 100
+        elif n != 0.0:
+            rel = 100
 
-        lines.append((key, o, n, rel, n - o, new[key]["unit"],))
+        lines.append((key, o, n, rel, n - o, value["unit"]))
     return lines

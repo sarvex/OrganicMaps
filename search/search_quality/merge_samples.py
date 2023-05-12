@@ -18,10 +18,10 @@ def points_equal(a, b):
 
 
 def rects_equal(a, b):
-    for key in ["minx", "miny", "maxx", "maxy"]:
-        if not doubles_equal(a[key], b[key]):
-            return False
-    return True
+    return all(
+        doubles_equal(a[key], b[key])
+        for key in ["minx", "miny", "maxx", "maxy"]
+    )
 
 
 def samples_equal(a, b):
@@ -41,10 +41,7 @@ def samples_equal(a, b):
         return False
 
     vp_key = "viewport"
-    if not rects_equal(a[vp_key], b[vp_key]):
-        return False
-
-    return True
+    return bool(rects_equal(a[vp_key], b[vp_key]))
 
 
 def results_equal(a, b):
@@ -54,17 +51,17 @@ def results_equal(a, b):
     """
     pos_key = "position"
     name_key = "name"
-    hn_key = "houseNumber"
-    types_key = "types"
     if a[name_key] != b[name_key]:
         return False
     if not points_equal(a[pos_key], b[pos_key]):
         return False
-    if a[hn_key] != b[hn_key]:
-        return False
-    if sorted(a[types_key]) != sorted(b[types_key]):
-        return False
-    return True
+    hn_key = "houseNumber"
+    types_key = "types"
+    return (
+        False
+        if a[hn_key] != b[hn_key]
+        else sorted(a[types_key]) == sorted(b[types_key])
+    )
 
 
 def greedily_match_results(a, b):
@@ -107,9 +104,7 @@ def merge_relevancies(a, b):
         return a, True
     if id_a == 1 and id_b <= 2:
         return b, True
-    if id_a > 1:
-        return b, True
-    return a, False
+    return (b, True) if id_a > 1 else (a, False)
 
 
 def merge_two_samples(a, b, line_number):

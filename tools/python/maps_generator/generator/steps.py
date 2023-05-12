@@ -35,7 +35,7 @@ def multithread_run_if_one_country(func):
     @functools.wraps(func)
     def wrap(env, *args, **kwargs):
         if len(env.countries) == 1:
-            kwargs.update({"threads_count": settings.THREADS_COUNT})
+            kwargs["threads_count"] = settings.THREADS_COUNT
         func(env, *args, **kwargs)
 
     return wrap
@@ -109,11 +109,11 @@ def step_preprocess(env: Env, **kwargs):
 
 def step_features(env: Env, **kwargs):
     if any(x not in WORLDS_NAMES for x in env.countries):
-        kwargs.update({"generate_packed_borders": True})
+        kwargs["generate_packed_borders"] = True
     if any(x == WORLD_NAME for x in env.countries):
-        kwargs.update({"generate_world": True})
+        kwargs["generate_world"] = True
     if len(env.countries) == len(get_all_countries_list(PathProvider.borders_path())):
-        kwargs.update({"have_borders_for_whole_world": True})
+        kwargs["have_borders_for_whole_world"] = True
 
     run_gen_tool(
         env.gen_tool,

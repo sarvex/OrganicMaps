@@ -117,21 +117,19 @@ class StageFeatures(Stage):
     def apply(self, env: Env):
         extra = {}
         if is_accepted(env, StageDescriptions):
-            extra.update({"idToWikidata": env.paths.id_to_wikidata_path})
+            extra["idToWikidata"] = env.paths.id_to_wikidata_path
         if env.production:
-            extra.update(
-                {
-                    "booking_data": env.paths.hotels_path,
-                    "promo_catalog_cities": env.paths.promo_catalog_cities_path,
-                    "popular_places_data": env.paths.popularity_path,
-                    "brands_data": env.paths.food_paths,
-                    "brands_translations_data": env.paths.food_translations_path,
-                }
-            )
+            extra |= {
+                "booking_data": env.paths.hotels_path,
+                "promo_catalog_cities": env.paths.promo_catalog_cities_path,
+                "popular_places_data": env.paths.popularity_path,
+                "brands_data": env.paths.food_paths,
+                "brands_translations_data": env.paths.food_translations_path,
+            }
         if is_accepted(env, StageCoastline):
-            extra.update({"emit_coasts": True})
+            extra["emit_coasts"] = True
         if is_accepted(env, StageIsolinesInfo):
-            extra.update({"isolines_path": PathProvider.isolines_path()})
+            extra["isolines_path"] = PathProvider.isolines_path()
 
         steps.step_features(env, **extra)
         if os.path.exists(env.paths.packed_polygons_path):
@@ -203,7 +201,7 @@ class StageMwm(Stage):
         ]
 
         for stage in world_stages.get(country, mwm_stages):
-            logger.info('Mwm stage {}: start...'.format(stage.__name__))
+            logger.info(f'Mwm stage {stage.__name__}: start...')
             stage(country=country)(env)
 
         env.finish_mwm(country)
@@ -222,12 +220,10 @@ class StageIndex(Stage):
             steps.step_coastline_index(env, country, **kwargs)
         else:
             if env.production:
-                kwargs.update(
-                    {
-                        "uk_postcodes_dataset": env.paths.uk_postcodes_path,
-                        "us_postcodes_dataset": env.paths.us_postcodes_path,
-                    }
-                )
+                kwargs |= {
+                    "uk_postcodes_dataset": env.paths.uk_postcodes_path,
+                    "us_postcodes_dataset": env.paths.us_postcodes_path,
+                }
             steps.step_index(env, country, **kwargs)
 
 

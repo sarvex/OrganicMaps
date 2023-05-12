@@ -140,8 +140,7 @@ def beautify_page(html, lang):
             x.extract()
     soup = remove_bad_sections(soup, lang)
     html = str(soup.prettify())
-    html = htmlmin.minify(html, remove_empty_space=True)
-    return html
+    return htmlmin.minify(html, remove_empty_space=True)
 
 
 def need_lang(lang, langs):
@@ -264,7 +263,7 @@ def get_wikidata_urls(entity, langs):
     return [
         entity.data["sitelinks"][k]["url"]
         for k in keys
-        if any([k.startswith(lang) for lang in langs])
+        if any(k.startswith(lang) for lang in langs)
     ]
 
 
@@ -311,7 +310,7 @@ def download_from_wikidata_tags(input_file, output_dir, langs, checker):
 def check_and_get_checker(popularity_file):
     popularity_set = None
     if popularity_file is None:
-        log.warning(f"Popularity file not set.")
+        log.warning("Popularity file not set.")
     elif os.path.exists(popularity_file):
         popularity_set = read_popularity(popularity_file)
         log.info(f"Popularity set size: {len(popularity_set)}.")

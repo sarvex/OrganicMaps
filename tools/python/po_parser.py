@@ -52,9 +52,7 @@ class PoParser:
     def lang_from_filename(self, filename):
         # file names are in this format: strings_ru_RU.po
         lang = filename[len("strings_"):-len(".po")]
-        if lang in TRANSFORMATION_TABLE:
-            return TRANSFORMATION_TABLE[lang]
-        return lang[:2]
+        return TRANSFORMATION_TABLE[lang] if lang in TRANSFORMATION_TABLE else lang[:2]
 
 
     def _parse_one_file(self, filepath, lang):
@@ -70,22 +68,16 @@ class PoParser:
                         continue
                     translation = self.clean_line(line, "msgstr")
                     if not translation:
-                        print("No translation for key {} in file {}".format(current_key, filepath))
+                        print(f"No translation for key {current_key} in file {filepath}")
                         continue
-                    self.dest_file.add_translation(
-                        translation,
-                        key="[{}]".format(current_key),
-                        lang=lang
-                    )
+                    self.dest_file.add_translation(translation, key=f"[{current_key}]", lang=lang)
                     string_started = True
 
                 elif not line or line.startswith("#"):
                     string_started = False
                     current_key = None
 
-                else:
-                    if not string_started:
-                        continue
+                elif string_started:
                     self.dest_file.append_to_translation(current_key, lang, self.clean_line(line))
 
 

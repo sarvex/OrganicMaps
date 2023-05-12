@@ -45,7 +45,7 @@ class Payload:
 
 
     def __repr__(self):
-        return "{}: {}: {}".format(self.response_code(), self.length(), self.message())
+        return f"{self.response_code()}: {self.length()}: {self.message()}"
 
 
 class ResponseProviderMixin:
@@ -100,7 +100,7 @@ active users and/or stop the server.
 
 class ResponseProvider:
     def __init__(self, delegate):
-        self.headers = list()
+        self.headers = []
         self.delegate = delegate
         self.byterange = None
         self.is_chunked = False
@@ -118,9 +118,7 @@ class ResponseProvider:
 
     def strip_query(self, url):
         query_start = url.find("?")
-        if (query_start > 0):
-            return url[:query_start]
-        return url
+        return url[:query_start] if (query_start > 0) else url
 
 
     def response_for_url_and_headers(self, url, headers):
@@ -216,9 +214,7 @@ class ResponseProvider:
     def message_for_47kb_file(self):
         message = []
         for i in range(0, BIG_FILE_SIZE + 1):
-            message.append(i // 256)
-            message.append(i % 256)
-
+            message.extend((i // 256, i % 256))
         return bytes(message)
 
 

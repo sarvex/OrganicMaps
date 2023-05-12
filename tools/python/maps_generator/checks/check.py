@@ -40,10 +40,7 @@ def get_rel(r: ResLine) -> bool:
     rel = 0.0
     if r.arrow != Arrow.zero:
         prev = norm(r.previous)
-        if prev == 0:
-            rel = 100.0
-        else:
-            rel = norm(r.diff) * 100.0 / prev
+        rel = 100.0 if prev == 0 else norm(r.diff) * 100.0 / prev
     return rel
 
 
@@ -68,8 +65,7 @@ class Check(ABC):
         self.name = name
 
     def print(self, silent_if_no_results=False, filt=None, file=sys.stdout):
-        s = self.formatted_string(silent_if_no_results, filt)
-        if s:
+        if s := self.formatted_string(silent_if_no_results, filt):
             print(s, file=file)
 
     @abstractmethod
@@ -248,13 +244,11 @@ class CompareCheckSet(CompareCheckBase):
             lines.append(f"{' ' * (_offset + 2)}No results.")
 
         for c in checks:
-            s = c.formatted_string(silent_if_no_results, filt, _offset + 2)
-            if s:
+            if s := c.formatted_string(silent_if_no_results, filt, _offset + 2):
                 lines.append(f"{' ' * (_offset + 2)}{s}")
 
         for s in sets:
-            s = s.formatted_string(silent_if_no_results, filt, _offset + 2)
-            if s:
+            if s := s.formatted_string(silent_if_no_results, filt, _offset + 2):
                 lines.append(s)
 
         if not lines:
@@ -290,7 +284,7 @@ def build_check_set_for_files(
 ):
     if recursive:
         raise NotImplementedError(
-            f"CheckSetBuilderForFiles is not implemented for recursive."
+            "CheckSetBuilderForFiles is not implemented for recursive."
         )
 
     cs = CompareCheckSet(name)

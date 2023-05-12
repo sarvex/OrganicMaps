@@ -24,10 +24,11 @@ def load_binary_list(path):
     """Loads reference binary classifier output. """
     bits = []
     with open(path, 'r') as fd:
-        for line in fd:
-            if (not line.strip()) or line.startswith('#'):
-                continue
-            bits.append(1 if line.startswith('y') else 0)
+        bits.extend(
+            1 if line.startswith('y') else 0
+            for line in fd
+            if line.strip() and not line.startswith('#')
+        )
     return bits
 
 
@@ -35,10 +36,11 @@ def load_score_list(path):
     """Loads list of matching scores. """
     scores = []
     with open(path, 'r') as fd:
-        for line in fd:
-            if (not line.strip()) or line.startswith('#'):
-                continue
-            scores.append(float(re.search(r'result score: (\d*\.\d+)', line).group(1)))
+        scores.extend(
+            float(re.search(r'result score: (\d*\.\d+)', line)[1])
+            for line in fd
+            if line.strip() and not line.startswith('#')
+        )
     return scores
 
 

@@ -39,7 +39,7 @@ class OpentableDownloader(object):
         with open(self.opentable_filename, 'w') as f:
             offset = 0
             while True:
-                request = urllib2.Request(url + '?offset={}'.format(offset), headers=headers)
+                request = urllib2.Request(f'{url}?offset={offset}', headers=headers)
                 logging.debug('Fetching data with headers %s from %s',
                               str(headers), request.get_full_url())
                 resp = urllib2.urlopen(request)
@@ -65,17 +65,18 @@ class OpentableDownloader(object):
         resp = urllib2.urlopen(request)
         # TODO(mgsergio): Handle exceptions
         if resp.getcode() != 200:
-            raise OpentableDownloaderError("Cant't get token. Response: {}".format(resp.read()))
+            raise OpentableDownloaderError(f"Cant't get token. Response: {resp.read()}")
         self.token = json.loads(resp.read())
         logging.debug('Token is %s', self.token)
 
     def _add_auth_header(self, headers):
         if self.token is None:
-            key = base64.b64encode('{}:{}'.format(self.login, self.password))
-            headers['Authorization'] = 'Basic {}'.format(key)
+            key = base64.b64encode(f'{self.login}:{self.password}')
+            headers['Authorization'] = f'Basic {key}'
         else:
-            headers['Authorization'] = '{} {}'.format(self.token['token_type'],
-                                                      self.token['access_token'])
+            headers[
+                'Authorization'
+            ] = f"{self.token['token_type']} {self.token['access_token']}"
         return headers
 
 

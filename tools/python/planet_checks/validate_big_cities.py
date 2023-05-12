@@ -72,13 +72,11 @@ def big_cities_generator(filename):
                     tags[tag_name] = tag_value
         if tags['place'] is None:
             continue
-        feature = {
+        yield {
             'id': f"{feature_type[0]}{element.get('id')}",
             'tags': tags,
-            'position': [float(element.get(c)) for c in ('lon', 'lat')]
+            'position': [float(element.get(c)) for c in ('lon', 'lat')],
         }
-        yield feature
-
         # If we don't need xml document tree it makes sense to clear
         # elements to save memory.
         element.clear()

@@ -46,9 +46,7 @@ def formula(popul, base = 32, mult = 0.5):
     return math.pow(popul, 1 / base) * mult
 
 def avgDistance(approx, data):
-    dist = 0
-    for x in xrange(len(data)):
-        dist += math.fabs(approx[x] - data[x])
+    dist = sum(math.fabs(approx[x] - data[x]) for x in xrange(len(data)))
     return dist / float(len(data))  
 
 def findBest(popul, data, minBase = 5, maxBase = 100, stepBase = 0.1, minMult = 0.01, maxMult = 1, stepMult = 0.01):

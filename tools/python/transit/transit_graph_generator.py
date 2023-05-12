@@ -29,7 +29,7 @@ def get_extended_osm_id(osm_id, osm_type):
     try:
         return str(osm_id | OsmIdCode.TYPE2CODE[osm_type[0]])
     except KeyError:
-        raise ValueError('Unknown OSM type: ' + osm_type)
+        raise ValueError(f'Unknown OSM type: {osm_type}')
 
 
 def get_line_id(road_id, line_index):
@@ -103,10 +103,14 @@ class TransitGraphBuilder:
 
     def __get_interchange_node(self, stop_id):
         """Returns the existing interchange node or creates a new one."""
-        for node_stops in self.interchange_nodes:
-            if stop_id in node_stops:
-                return node_stops
-        return (stop_id,)
+        return next(
+            (
+                node_stops
+                for node_stops in self.interchange_nodes
+                if stop_id in node_stops
+            ),
+            (stop_id,),
+        )
 
     def __get_stop(self, stop_id):
         """Returns the stop or the interchange node."""
@@ -130,9 +134,12 @@ class TransitGraphBuilder:
     def __read_stops(self):
         """Reads stops, their exits and entrances."""
         for stop_item in self.input_data['stops']:
-            stop = {}
-            stop['id'] = stop_item['id']
-            stop['osm_id'] = get_extended_osm_id(stop_item['osm_id'], stop_item['osm_type'])
+            stop = {
+                'id': stop_item['id'],
+                'osm_id': get_extended_osm_id(
+                    stop_item['osm_id'], stop_item['osm_type']
+                ),
+            }
             if 'zone_id' in stop_item:
                 stop['zone_id'] = stop_item['zone_id']
             stop['point'] = get_mercator_point(stop_item['lat'], stop_item['lon'])
@@ -173,9 +180,8 @@ class TransitGraphBuilder:
             self.networks.append(network)
 
             for route_item in network_item['routes']:
-                line_index = 0
                 # Create a line for each itinerary.
-                for line_item in route_item['itineraries']:
+                for line_index, line_item in enumerate(route_item['itineraries']):
                     line_stops = line_item['stops']
                     line_id = get_line_id(route_item['route_id'], line_index)
                     line = {'id': line_id,
@@ -209,14 +215,13 @@ class TransitGraphBuilder:
 
                     self.__check_line_title(line, route_item.get('name', ''))
                     self.lines.append(line)
-                    line_index += 1
 
     def __match_color(self, color_str, casing_str):
         if color_str is None or len(color_str) == 0:
             return self.palette.get_default_color()
         if casing_str is None:
             casing_str = ''
-        matched_colors_key = color_str + "/" + casing_str
+        matched_colors_key = f"{color_str}/{casing_str}"
         if matched_colors_key in self.matched_colors:
             return self.matched_colors[matched_colors_key]
         c = self.palette.get_nearest_color(color_str, casing_str, self.matched_colors.values())
@@ -292,10 +297,7 @@ class TransitGraphBuilder:
                                                                       self.points_per_curve, self.alpha)
             info['curve'] = np.array(curve_points)
 
-            polyline = []
-            for point in curve_points:
-                polyline.append({'x': point[0], 'y': point[1]})
-
+            polyline = [{'x': point[0], 'y': point[1]} for point in curve_points]
             shape = {'id': {'stop1_id': id1, 'stop2_id': id2},
                      'polyline': polyline}
             self.shapes.append(shape)
@@ -368,14 +370,26 @@ class TransitGraphBuilder:
             tokens = c.split('/')
             if len(tokens[1]) == 0:
                 tokens[1] = tokens[0]
-            ax.add_patch(patches.Rectangle((sz, delta_y), sz, sz, facecolor="#" + tokens[0], edgecolor="#" + tokens[1]))
+            ax.add_patch(
+                patches.Rectangle(
+                    (sz, delta_y),
+                    sz,
+                    sz,
+                    facecolor=f"#{tokens[0]}",
+                    edgecolor=f"#{tokens[1]}",
+                )
+            )
             rect_title = tokens[0]
-            if tokens[0] != tokens[1]:
-                rect_title += "/" + tokens[1]
-            ax.text(2.5 * sz, delta_y, rect_title + " -> ")
+            if rect_title != tokens[1]:
+                rect_title += f"/{tokens[1]}"
+            ax.text(2.5 * sz, delta_y, f"{rect_title} -> ")
             ref_color = colors_ref_table[self.matched_colors[c]]
-            ax.add_patch(patches.Rectangle((0.3 + sz, delta_y), sz, sz, facecolor="#" + ref_color))
-            ax.text(0.3 + 2.5 * sz, delta_y, ref_color + " (" + self.matched_colors[c] + ")")
+            ax.add_patch(
+                patches.Rectangle(
+                    (0.3 + sz, delta_y), sz, sz, facecolor=f"#{ref_color}"
+                )
+            )
+            ax.text(0.3 + 2.5 * sz, delta_y, f"{ref_color} ({self.matched_colors[c]})")
             delta_y += sz * 2.0
         plt.show()
 
@@ -384,7 +398,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file', help='input file name of transit data')
     parser.add_argument('output_file', nargs='?', help='output file name of generated graph')
-    default_colors_path = os.path.dirname(os.path.abspath(__file__)) + '/../../../data/transit_colors.txt'
+    default_colors_path = f'{os.path.dirname(os.path.abspath(__file__))}/../../../data/transit_colors.txt'
     parser.add_argument('-c', '--colors', type=str, default=default_colors_path,
                         help='transit colors file COLORS_FILE_PATH', metavar='COLORS_FILE_PATH')
     parser.add_argument('-p', '--preview', action="store_true", default=False,
@@ -413,7 +427,7 @@ if __name__ == '__main__':
     head, tail = os.path.split(os.path.abspath(args.input_file))
     name, extension = os.path.splitext(tail)
     if output_file is None:
-        output_file = os.path.join(head, name + '.transit' + extension)
+        output_file = os.path.join(head, f'{name}.transit{extension}')
     with open(output_file, 'w') as json_file:
         result_data = json.dumps(result, ensure_ascii=False, indent='\t', sort_keys=True, separators=(',', ':'))
         json_file.write(result_data)
@@ -423,7 +437,8 @@ if __name__ == '__main__':
         transit.show_preview()
 
     if args.matched_colors:
-        colors_ref_table = {}
-        for color_name, color_info in colors['colors'].items():
-            colors_ref_table[color_name] = color_info['clear']
+        colors_ref_table = {
+            color_name: color_info['clear']
+            for color_name, color_info in colors['colors'].items()
+        }
         transit.show_color_maching_table(name, colors_ref_table)

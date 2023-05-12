@@ -9,10 +9,10 @@ logger.setLevel(logging.ERROR)
 
 
 def example__storing_features_in_a_collection(path):
-    ft_list = [ft for ft in mwm.Mwm(path)]
+    ft_list = list(mwm.Mwm(path))
     print(f"List size: {len(ft_list)}")
 
-    ft_tuple = tuple(ft for ft in mwm.Mwm(path))
+    ft_tuple = tuple(mwm.Mwm(path))
     print(f"Tuple size: {len(ft_tuple)}")
 
     def slow():
@@ -40,7 +40,7 @@ def example__storing_features_in_a_collection(path):
 
 def example__features_generator(path):
     def make_gen(path):
-        return (ft for ft in mwm.Mwm(path))
+        return iter(mwm.Mwm(path))
 
     cnt = 0
     print("Names of several first features:")
@@ -63,11 +63,11 @@ def example__features_generator(path):
 
 
 def example__sequential_processing(path):
-    long_names = []
-    for ft in mwm.Mwm(path):
-        if len(ft.readable_name()) > 100:
-            long_names.append(ft.readable_name())
-
+    long_names = [
+        ft.readable_name()
+        for ft in mwm.Mwm(path)
+        if len(ft.readable_name()) > 100
+    ]
     print("Long names:", long_names)
 
 

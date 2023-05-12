@@ -23,5 +23,5 @@ setup(
         "drules_proto_vehicle_dark.bin",
         "drules_proto_vehicle_dark.txt",
     ],
-    install_requires=["omim-data-files=={}".format(get_version())]
+    install_requires=[f"omim-data-files=={get_version()}"],
 )

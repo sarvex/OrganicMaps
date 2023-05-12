@@ -14,28 +14,20 @@ basedir = dirname(realpath(__file__))
 # for more information install clang-3.2-doc package and
 # check UsersManual.html
 flags = [
-'-Werror',
-'-Wall',
-'-Wextra',
-'-pedantic',
-'-Wno-return-type',
-'-Wno-unused-parameter',
-'-Wno-unused-variable',
-
-'-std=c++11',
-
-# '-x' and 'c++' also required
-# use 'c' for C projects
-'-x',
-'c++',
-
-# libosmium include dirs
-'-I%s/include' % basedir,
-'-I%s/test/include' % basedir,
-'-I%s/test/data-test/include' % basedir,
-
-# include third party libraries
-'-I/usr/include/gdal',
+    '-Werror',
+    '-Wall',
+    '-Wextra',
+    '-pedantic',
+    '-Wno-return-type',
+    '-Wno-unused-parameter',
+    '-Wno-unused-variable',
+    '-std=c++11',
+    '-x',
+    'c++',
+    f'-I{basedir}/include',
+    f'-I{basedir}/test/include',
+    f'-I{basedir}/test/data-test/include',
+    '-I/usr/include/gdal',
 ]
 
 # youcompleteme is calling this function to get flags

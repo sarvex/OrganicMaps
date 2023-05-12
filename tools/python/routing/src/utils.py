@@ -32,7 +32,9 @@ def log_with_stars(string):
     LOG.info('*' * 96)
     first_stars = '*' * int((stars_number - len(string)) / 2)
 
-    result = first_stars + ' ' + string + ' ' + '*' * (stars_number - len(first_stars) - len(string) - 2)
+    result = f'{first_stars} {string} ' + '*' * (
+        stars_number - len(first_stars) - len(string) - 2
+    )
 
     LOG.info(result)
     LOG.info('*' * 96)
@@ -62,10 +64,7 @@ class ConfigINI():
         value = self._read_config_ini_value(config_ini=self.config_ini, path=path)
         if value.lower() == 'true':
             return True
-        if value.lower() == 'false':
-            return False
-        else:
-            return value
+        return False if value.lower() == 'false' else value
 
     def _read_config_ini_value(self, *, config_ini, path):
         item = path.pop(0)
@@ -107,18 +106,14 @@ class Omim():
     def _run_system_unsafe(self, *, cmd, env=None, output_file=None, log_cmd=False):
         env_params = ""
         if env is None:
-            env = dict()
+            env = {}
         else:
             env_params = "env "
 
         for key, value in env.items():
             env_params += f'{key}={value} '
 
-        if output_file is None:
-            output = ""
-        else:
-            output = f'> {output_file} 2>&1'
-
+        output = "" if output_file is None else f'> {output_file} 2>&1'
         full_cmd = env_params + cmd + output
         if log_cmd:
             LOG.info(f'Run: {full_cmd}')
@@ -167,12 +162,18 @@ class Omim():
             return
 
         branch_hash = get_branch_hash_name(branch=self.branch, hash=self.hash)
-        output_prefix = os.path.join(self.build_dir, branch_hash + '_')
+        output_prefix = os.path.join(self.build_dir, f'{branch_hash}_')
 
         cmake_cmd = f'{self.cmake_cmd} {self.omim_path} {cmake_options}'
-        self._run_system(cmd=cmake_cmd, output_file=output_prefix + 'cmake_run.log', log_cmd=True)
+        self._run_system(
+            cmd=cmake_cmd,
+            output_file=f'{output_prefix}cmake_run.log',
+            log_cmd=True,
+        )
         make_cmd = f'make -j{self.cpu_count} {aim}'
-        self._run_system(cmd=make_cmd, output_file=output_prefix + 'make_run.log', log_cmd=True)
+        self._run_system(
+            cmd=make_cmd, output_file=f'{output_prefix}make_run.log', log_cmd=True
+        )
         LOG.info(f'Build {aim} done')
         self._run_system(cmd=f'cp {aim} {binary_path}')
 
@@ -181,13 +182,10 @@ class Omim():
         if not os.path.exists(binary_path):
             raise Exception(f'Cannot find {binary_path}, did you call build()?')
 
-        args_string = ""
-        for arg, value in args.items():
-            if value:
-                args_string += f' --{arg}={value}'
-            else:
-                args_string += f' --{arg}'
-
+        args_string = "".join(
+            f' --{arg}={value}' if value else f' --{arg}'
+            for arg, value in args.items()
+        )
         cmd = binary_path + args_string
         code, _ = self._run_system_unsafe(cmd=cmd, env=env, output_file=output_file)
         if log_error_code:

@@ -28,10 +28,7 @@ BOOTSTRAP_ITERATIONS = 10000
 
 
 def transform_name_score(value, categories_match):
-    if categories_match == 1:
-        return 'Zero'
-    else:
-        return value
+    return 'Zero' if categories_match == 1 else value
 
 
 def normalize_data(data):
@@ -59,7 +56,9 @@ def normalize_data(data):
     # training data to distinguish between them.  Remove following
     # line as soon as the model will be changed or we will have enough
     # training data.
-    data['SearchType'] = data['SearchType'].apply(lambda v: v if v != 'Building' and v != 'COMPLEX_POI' else 'SUBPOI')
+    data['SearchType'] = data['SearchType'].apply(
+        lambda v: v if v not in ['Building', 'COMPLEX_POI'] else 'SUBPOI'
+    )
     for st in SEARCH_TYPES:
         data[st] = data['SearchType'].apply(lambda v: int(st == v))
 
@@ -211,7 +210,7 @@ def print_const(name, value):
 
 
 def print_array(name, size, values):
-    print('double constexpr {}[{}] = {{'.format(name, size))
+    print(f'double constexpr {name}[{size}] = {{')
     print(',\n'.join('  {:.7f} /* {} */'.format(w, f) for (f, w) in values))
     print('};')
 
@@ -239,10 +238,7 @@ def cpp_output(features, ws):
 def show_bootstrap_statistics(clf, X, y, features):
     num_features = len(features)
 
-    coefs = []
-    for i in range(num_features):
-        coefs.append([])
-
+    coefs = [[] for _ in range(num_features)]
     for _ in range(BOOTSTRAP_ITERATIONS):
         X_sample, y_sample = resample(X, y)
         clf.fit(X_sample, y_sample)
@@ -304,7 +300,7 @@ def main(args):
     gs = GridSearchCV(clf, grid, scoring='roc_auc', cv=cv)
     gs.fit(xs, ys)
 
-    print('Best params: {}'.format(gs.best_params_))
+    print(f'Best params: {gs.best_params_}')
 
     ws = get_normalized_coefs(gs.best_estimator_)
 

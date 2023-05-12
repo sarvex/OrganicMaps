@@ -29,11 +29,11 @@ def build_osmtools(path, output=subprocess.DEVNULL, error=subprocess.DEVNULL):
         cc.append(s)
         result[executable] = out
 
-    messages = []
-    for c in cc:
-        if c.wait() != os.EX_OK:
-            messages.append(f"The launch of {' '.join(c.args)} failed.")
-    if messages:
+    if messages := [
+        f"The launch of {' '.join(c.args)} failed."
+        for c in cc
+        if c.wait() != os.EX_OK
+    ]:
         raise BadExitStatusError("\n".split(messages))
 
     return result

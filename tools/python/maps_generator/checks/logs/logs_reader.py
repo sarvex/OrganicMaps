@@ -106,8 +106,7 @@ class Log:
 
     @staticmethod
     def _parse_gen_line(line: str, base_time: float = 0.0) -> LogLine:
-        m = GEN_LINE_PATTERN.match(line)
-        if m:
+        if m := GEN_LINE_PATTERN.match(line):
             return LogLine(
                 timestamp=base_time + float(m["timestamp"]),
                 level=logging.getLevelName(m["level"]),
@@ -116,8 +115,7 @@ class Log:
                 type=LogType.gen,
             )
 
-        m = GEN_LINE_CHECK_PATTERN.match(line)
-        if m:
+        if m := GEN_LINE_CHECK_PATTERN.match(line):
             return LogLine(
                 timestamp=None,
                 level=logging.getLevelName("CRITICAL"),
@@ -163,15 +161,13 @@ def split_into_stages(log: Log) -> List[LogStage]:
     lines = []
     for line in log.lines:
         if line.message.startswith("Stage"):
-            m = STAGE_START_MSG_PATTERN.match(line.message)
-            if m:
+            if m := STAGE_START_MSG_PATTERN.match(line.message):
                 if name is not None:
                     logger.warn(f"{log.name}: stage {name} has not finish line.")
                     log_stages.append(LogStage(name=name, duration=None, lines=lines))
                 name = m["name"]
 
-            m = STAGE_FINISH_MSG_PATTERN.match(line.message)
-            if m:
+            if m := STAGE_FINISH_MSG_PATTERN.match(line.message):
                 assert name == m["name"], line
                 duration = parse_timedelta(m["duration_string"])
                 log_stages.append(LogStage(name=name, duration=duration, lines=lines))
@@ -191,10 +187,7 @@ def _is_worse(lhs: LogStage, rhs: LogStage) -> bool:
     if (lhs.duration is None) ^ (rhs.duration is None):
         return lhs.duration is None
 
-    if len(rhs.lines) > len(lhs.lines):
-        return True
-
-    return rhs.duration > lhs.duration
+    return True if len(rhs.lines) > len(lhs.lines) else rhs.duration > lhs.duration
 
 
 def normalize_logs(llogs: List[LogStage]) -> List[LogStage]:
@@ -230,8 +223,7 @@ def find_and_parse(
     if isinstance(logs, list):
         found = []
         for log in logs:
-            m = pattern.match(log.message)
-            if m:
+            if m := pattern.match(log.message):
                 found.append((m.groupdict(), log))
         return found
 

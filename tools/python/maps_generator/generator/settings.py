@@ -32,11 +32,10 @@ def get_config_path(config_path: AnyStr):
         if opt == opt_config:
             indexes = (i, i + 2)
 
-    config_args = argv[indexes[0] : indexes[1]]
-    if config_args:
+    if config_args := argv[indexes[0] : indexes[1]]:
         return parser.parse_args(config_args).config
 
-    config_var = os.environ.get(f"MM_GEN__CONFIG")
+    config_var = os.environ.get("MM_GEN__CONFIG")
     return config_path if config_var is None else config_var
 
 

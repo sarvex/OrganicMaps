@@ -20,20 +20,18 @@ def deserialize_places(src):
             cells = l.split('\t')
 
             if len(cells) < 5 and not cells[0]:
-                logging.error("Country cell is empty. Incorrect line: {}".format(cells))
+                logging.error(f"Country cell is empty. Incorrect line: {cells}")
                 exit()
 
             # Add full country.
             if len(cells) < 3:
                 countries[cells[0]] = []
-            # Add city of the country.
             elif len(cells) < 5:
                 countries[cells[0]].append(cells[2])
-            # Add mwm.
-            elif len(cells) >= 5:
+            else:
                 mwms.append(cells[4])
     except IndexError as e:
-        logging.error("The structure of src file is incorrect. Exception: {}".format(e))
+        logging.error(f"The structure of src file is incorrect. Exception: {e}")
         exit()
 
     return countries, mwms
@@ -44,7 +42,7 @@ def convert(src_path, dst_path):
         with open(src_path, "r") as f:
             src = f.read()
     except (OSError, IOError):
-        logging.error("Cannot read src file {}".format(src_path))
+        logging.error(f"Cannot read src file {src_path}")
         return
 
     countries, mwms = deserialize_places(src)
@@ -67,7 +65,7 @@ def convert(src_path, dst_path):
         with open(dst_path, "w") as f:
             json.dump(result, f, indent=2, sort_keys=True)
     except (OSError, IOError):
-        logging.error("Cannot write result into dst file {}".format(dst_path))
+        logging.error(f"Cannot write result into dst file {dst_path}")
         return
 
 
@@ -87,8 +85,7 @@ def process_options():
 
 
 def main():
-    options = process_options()
-    if options:
+    if options := process_options():
         convert(options.src, options.dst)
 
 

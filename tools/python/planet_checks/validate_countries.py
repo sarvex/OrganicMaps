@@ -79,12 +79,7 @@ def places_generator(osm_filename):
                 update_tag_value(tags, child)
         if tags['place'] is None:
             continue
-        feature = {
-            'id': f"{feature_type[0]}{element.get('id')}",
-            'tags': tags
-        }
-        yield feature
-
+        yield {'id': f"{feature_type[0]}{element.get('id')}", 'tags': tags}
         # If we don't need xml document tree it makes sense to clear
         # elements to save memory.
         element.clear()
@@ -118,13 +113,12 @@ def boundaries_generator(osm_filename):
                 tags['boundary'] != 'administrative' or
                 tags['admin_level'] != '2'):
             continue
-        feature = {
+        yield {
             'id': f"{feature_type[0]}{element.get('id')}",
             'tags': tags,
             'admin_centres': admin_centres,
-            'labels': labels
+            'labels': labels,
         }
-        yield feature
         element.clear()
 
 
@@ -162,15 +156,20 @@ def extract_places(countries_osm_file):
             'name:en': nameen,
             'place': place
         }
-        if (place != 'country' and
-            place not in ('city', 'town', 'hamlet',
-                          'village', 'municipality')
+        if place not in (
+            'country',
+            'city',
+            'town',
+            'hamlet',
+            'village',
+            'municipality',
         ):
             logging.warning(f"Not-settlement capital place '{place}' "
                             f"{el_id}")
 
-    double_places = [(k, v) for k, v in places_by_name.items() if len(v) > 1]
-    if double_places:
+    if double_places := [
+        (k, v) for k, v in places_by_name.items() if len(v) > 1
+    ]:
         double_places_str = json.dumps(
             sorted(double_places, key=lambda t: t[0][1]),
             ensure_ascii=False,
@@ -239,15 +238,13 @@ def find_unbound_label(boundary, country_places):
                           if v['name:en'] == nameen}
     num_fit_country_places = len(fit_country_places)
     if num_fit_country_places == 1:
-        label = list(fit_country_places.values())[0]
-        return label
-    else:
-        logging.error(
-            f"country_places with the same name: {fit_country_places}"
-            if num_fit_country_places > 1 else
-            f"No label found for rel_id {boundary['id']} '{nameen}'"
-        )
-        return None
+        return list(fit_country_places.values())[0]
+    logging.error(
+        f"country_places with the same name: {fit_country_places}"
+        if num_fit_country_places > 1 else
+        f"No label found for rel_id {boundary['id']} '{nameen}'"
+    )
+    return None
 
 
 def find_label(boundary, country_places, used_country_places):
@@ -290,10 +287,10 @@ def extract_country(boundary, countries_by_name, country_places,
         boundary['tags'][tag] for tag in ('name', 'name:en',
                                           'type', 'admin_level')
     )
-    if not name and not nameen:
-        logging.error(f"Boundary without name and name:en, rel_id {el_id}")
-        return None
     if not name:
+        if not nameen:
+            logging.error(f"Boundary without name and name:en, rel_id {el_id}")
+            return None
         logging.warning(f"Country without name, rel_id {el_id}")
     if not nameen:
         logging.warning(f"Country without name:en, rel_id {el_id}")
@@ -337,12 +334,13 @@ def extract_boundaries(countries_osm_file, country_places, noncountry_places):
         if country is not None:
             boundary_id = country['boundary']['id']
             osm_countries[boundary_id] = country
-            nameen = country['boundary']['name:en']
-            if nameen:
+            if nameen := country['boundary']['name:en']:
                 countries_by_name[nameen] = country
 
-    unused_country_places = set(country_places.keys()) - used_country_places
-    if unused_country_places:
+    if (
+        unused_country_places := set(country_places.keys())
+        - used_country_places
+    ):
         unused_country_places_str = json.dumps(
             sorted(
                 [country_places[c_id] for c_id in unused_country_places],
@@ -366,10 +364,9 @@ def extract_countries(countries_osm_file):
 
     country_places, noncountry_places = extract_places(countries_osm_file)
 
-    osm_countries = extract_boundaries(countries_osm_file,
-                                       country_places,
-                                       noncountry_places)
-    return osm_countries
+    return extract_boundaries(
+        countries_osm_file, country_places, noncountry_places
+    )
 
 
 def is_country_equal_to_reference(country, ref_country):
@@ -413,7 +410,7 @@ def map_reference_countries_to_osm(osm_countries, reference_countries):
             fit_countries = {k: v for k, v in osm_countries.items()
                              if v['label'] and
                                 v['label']['name:en'] == country_name}
-            if len(fit_countries) == 0:
+            if not fit_countries:
                 logging.critical(f"Country '{country_name}' not found")
             elif len(fit_countries) > 1:
                 logging.critical("Found more than one country "
@@ -471,11 +468,11 @@ def validate_countries(osm_countries,
         if data is not None
     )
 
-    matched_osm_country_ids = set(
+    matched_osm_country_ids = {
         data['osm_country']['boundary']['id']
         for country_name, data in ref2osm_country_mapping.items()
         if data is not None
-    )
+    }
     superfluous_countries = [
         country
         for osm_boundary_id, country in osm_countries.items()
@@ -548,9 +545,9 @@ def read_reference_data(reference_countries_file, whitelist_file):
 
     # Ensure that no reference country also belongs to whitelist.
     for country_name, country in reference_countries.items():
-        country_is_in_whitelist = is_country_in_list(country,
-                                                     whitelist_countries)
-        if country_is_in_whitelist:
+        if country_is_in_whitelist := is_country_in_list(
+            country, whitelist_countries
+        ):
             raise ValidationError(
                 f"Country {country_name} "
                 "is in reference list and whitelist simultaneously"

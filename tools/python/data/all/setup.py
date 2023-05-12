@@ -18,4 +18,4 @@ _D = [
     "omim-data-styles",
 ]
 
-setup(__file__, "all", [], install_requires=["{}=={}".format(d, _V) for d in _D])
+setup(__file__, "all", [], install_requires=[f"{d}=={_V}" for d in _D])

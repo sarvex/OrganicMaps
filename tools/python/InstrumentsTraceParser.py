@@ -54,4 +54,6 @@ if __name__ == "__main__":
     for file_path in sys.argv[1:]:
         analyzer = Analyzer()
         analyzer.read_file(file_path)
-        print("{}\n\tavg:  {}\n\tmean: {}\n\tstd:  {}".format(file_path, analyzer.avg, analyzer.mean, analyzer.std))
+        print(
+            f"{file_path}\n\tavg:  {analyzer.avg}\n\tmean: {analyzer.mean}\n\tstd:  {analyzer.std}"
+        )

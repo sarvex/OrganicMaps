@@ -9,8 +9,7 @@ DURATION_PATTERN = re.compile(
 
 def unique(s):
     seen = set()
-    seen_add = seen.add
-    return [x for x in s if not (x in seen or seen_add(x))]
+    return [x for x in s if x not in seen and not seen.add(x)]
 
 
 def parse_timedelta(s):

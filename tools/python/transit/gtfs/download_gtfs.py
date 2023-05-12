@@ -48,10 +48,7 @@ def download_gtfs_sources_mobilitydb(path):
 
 def get_gtfs_urls_mobilitydb(path, countries_list):
     """Extracts the feed urls from the downloaded csv file"""
-    download_from_all_countries = True
-    if countries_list:
-        download_from_all_countries = False
-
+    download_from_all_countries = not countries_list
     download_gtfs_sources_mobilitydb(path)
     file = open(os.path.join(path, RAW_FILE_MOBILITYDB), encoding='UTF-8')
     raw_sources = csv.DictReader(file)
@@ -85,11 +82,7 @@ def parse_transitland_page(url):
             response.raise_for_status()
 
             data = json.loads(response.text)
-            if "feeds" in data:
-                gtfs_feeds_urls = get_feeds_links(data["feeds"])
-            else:
-                gtfs_feeds_urls = []
-
+            gtfs_feeds_urls = get_feeds_links(data["feeds"]) if "feeds" in data else []
             next_page = data["meta"]["next"] if "next" in data.get("meta", "") else ""
             return gtfs_feeds_urls, next_page
 
@@ -154,7 +147,9 @@ def write_list_to_file(path, lines):
 def crawl_transitland_for_feed_urls(out_path, transitland_api_key):
     """Crawls transitland feeds API and parses feeds urls from json on each page
     Do not try to parallel it because of the Transitland HTTP requests restriction."""
-    start_page = "https://transit.land/api/v2/rest/feeds?api_key={}".format(transitland_api_key)
+    start_page = (
+        f"https://transit.land/api/v2/rest/feeds?api_key={transitland_api_key}"
+    )
 
     total_feeds = []
     gtfs_feeds_urls, next_page = parse_transitland_page(start_page)
@@ -261,10 +256,7 @@ def main():
     if args.mode in ["fullrun", "load_feed_urls"]:
 
         if args.source in ["all", "mobilitydb"]:
-            mdb_countries = []
-            if args.mdb_countries:
-                mdb_countries = args.mdb_countries.split(',')
-
+            mdb_countries = args.mdb_countries.split(',') if args.mdb_countries else []
             get_gtfs_urls_mobilitydb(args.path, mdb_countries)
         if args.source in ["all", "transitland"]:
             if not args.transitland_api_key:

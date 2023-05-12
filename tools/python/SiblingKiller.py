@@ -48,27 +48,26 @@ class SiblingKiller:
             self.__allow_serving = False
             logging.debug("There is a server that is currently serving on our port... Disallowing to start a new one")
             return
-        
+
         logging.debug("There are no servers that are currently serving. Will try to kill our siblings.")
-        
-        
+
+
         sibs = list(self.siblings())
-        
+
         for sibling in sibs:
             logging.debug(f"Checking whether we should kill sibling id: {sibling}")
-            
+
             self.give_process_time_to_kill_port_user()
-            
+
             if self.wait_for_server():
-                serving_pid = self.serving_process_id()
-                if serving_pid:
+                if serving_pid := self.serving_process_id():
                     logging.debug(f"There is a serving sibling with process id: {serving_pid}")
                     self.kill(pids=list(map(lambda x: x != serving_pid, sibs)))
                     self.__allow_serving = False
                     return
             else:
                 self.kill(pid=sibling)
-                
+
         self.kill_process_on_port() # changes __allow_serving to True if the process was alive and serving
         
 
@@ -120,11 +119,8 @@ class SiblingKiller:
         if len(listening_process) > 1:
             pass
             # We should panic here
-        
-        if not listening_process:
-            return None
-        
-        return listening_process[0]
+
+        return None if not listening_process else listening_process[0]
     
     
     def my_process_id(self):
@@ -138,14 +134,13 @@ class SiblingKiller:
     def ps_dash_w(self):
         not_header = lambda x: x and not x.startswith("UID")
         output = self.exec_command("ps -f").split("\n")
-        return list(filter(not_header, list(re.sub("\s{1,}", " ", x.strip()) for x in output)))
+        return list(
+            filter(not_header, [re.sub("\s{1,}", " ", x.strip()) for x in output])
+        )
 
 
     def wait_for_server(self):
-        for i in range(0, 2):
-            if self.ping(): # unsuccessful ping takes 5 seconds (look at PING_TIMEOUT) iff there is a dead server occupying the port
-                return True
-        return False
+        return any(self.ping() for _ in range(0, 2))
     
     
     def ping(self):
@@ -165,9 +160,7 @@ class SiblingKiller:
         try:
             response = urlopen(f"http://localhost:{self.port}/id", timeout=self.ping_timeout)
             resp = response.read()
-            id = int(resp)
-            return id
-        
+            return int(resp)
         except:
             logging.info("Couldn't get id of a serving process (the PID of the server that responded to pinging)")
             return None

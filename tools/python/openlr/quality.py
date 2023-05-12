@@ -113,9 +113,7 @@ class Segment:
     def __init__(self, segment_id, golden_route, matched_route, ignored):
         if not golden_route and not ignored:
             raise NoGoldenPathError(
-                "segment {} does not have a corresponding golden route"
-                "and is not marked"
-                .format(segment_id)
+                f"segment {segment_id} does not have a corresponding golden routeand is not marked"
             )
         self.segment_id = segment_id
         self.golden_route = golden_route
@@ -123,7 +121,7 @@ class Segment:
         self.ignored = ignored
 
     def __repr__(self):
-        return 'Segment({})'.format(self.segment_id)
+        return f'Segment({self.segment_id})'
 
     def as_tuple(self):
         return self.segment_id, self.matched_route, self.golden_route
@@ -161,8 +159,9 @@ def print_ignored_segments_result(descr, tree, limit):
         ignored_segments_number(tree, limit)
     print()
     print(descr)
-    print('{} matched segments from {} ignored segments.'.
-        format(len(assessed_ignored_seg_but_matched), assessed_ignored_seg_num))
+    print(
+        f'{len(assessed_ignored_seg_but_matched)} matched segments from {assessed_ignored_seg_num} ignored segments.'
+    )
     print('Ignored segments, but matched:')
     print('\n'.join(assessed_ignored_seg_but_matched))
 
@@ -173,13 +172,10 @@ def parse_segments(tree, limit):
         ignored = s.find('Ignored') is not None and ignored_tag.text == 'true'
         segment_id = int(s.find('.//ReportSegmentID').text)
         matched_route = parse_route(s.find('Route'))
-        # TODO(mgsergio): This is a temproraty hack. All untouched segments
-        # within limit are considered accurate, so golden path should be equal
-        # matched path.
-        golden_route = parse_route(s.find('GoldenRoute'))
-        if not golden_route and not ignored:
-            continue
-        yield Segment(segment_id, golden_route, matched_route, ignored)
+        if golden_route := parse_route(s.find('GoldenRoute')):
+            yield Segment(segment_id, golden_route, matched_route, ignored)
+        elif ignored:
+            yield Segment(segment_id, golden_route, matched_route, ignored)
 
 def calculate(tree):
     result = {}
@@ -192,7 +188,7 @@ def calculate(tree):
             else:
                 result[s.segment_id] = common_part(s.golden_route, s.matched_route)
         except AssertionError:
-            print('Something is wrong with segment {}'.format(s))
+            print(f'Something is wrong with segment {s}')
             raise
         except Segment.NoGoldenPathError:
             raise
@@ -255,15 +251,11 @@ if __name__ == '__main__':
         merge(assessed, candidate)
         candidate_scores = calculate(candidate)
 
-        print('{}\t{}\t{}\t{}'.format(
-            'segment_id', 'A', 'B', 'Diff')
-        )
+        print(f'segment_id\tA\tB\tDiff')
         for seg_id in assessed_scores:
-            print('{}\t{}\t{}\t{}'.format(
-                seg_id,
-                assessed_scores[seg_id], candidate_scores[seg_id],
-                assessed_scores[seg_id] - candidate_scores[seg_id]
-            ))
+            print(
+                f'{seg_id}\t{assessed_scores[seg_id]}\t{candidate_scores[seg_id]}\t{assessed_scores[seg_id] - candidate_scores[seg_id]}'
+            )
         mean1 = np.mean(list(assessed_scores.values()))
         std1 = np.std(list(assessed_scores.values()), ddof=1)
         mean2 = np.mean(list(candidate_scores.values()))
@@ -279,9 +271,7 @@ if __name__ == '__main__':
         print_ignored_segments_result('Base', assessed, args.limit)
         print_ignored_segments_result('New', candidate, args.limit)
     else:
-        print('{}\t{}'.format(
-            'segment_id', 'intersection_weight')
-        )
+        print(f'segment_id\tintersection_weight')
         for x in assessed_scores.items():
             print('{}\t{}'.format(*x))
         print('Edge number: {:d}, mean: {:.4f}, std: {:.4f}'.format(

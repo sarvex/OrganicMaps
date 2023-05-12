@@ -114,8 +114,7 @@ def params_from_dict(params_dict):
 class IntegrationRunner:
     def __init__(self):
         proc_count = cpu_count() / 5 * 4
-        if proc_count < 1:
-            proc_count = 1
+        proc_count = max(proc_count, 1)
         self.pool = multiprocessing.Pool(proc_count, initializer=setup_jenkins_console_logger)
         self.workspace_path = ""
         self.runlist = []
@@ -158,8 +157,7 @@ class IntegrationRunner:
 
     def prepare_list_of_tests(self):
         for exec_file in self.runlist:
-            for test_tuple in self.map_args(exec_file):
-                yield test_tuple
+            yield from self.map_args(exec_file)
 
 
     def set_instance_vars_from_options(self, args):

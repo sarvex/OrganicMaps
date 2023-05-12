@@ -14,7 +14,7 @@ class Status:
 
     @classmethod
     def is_error(cls, status):
-        return status == cls.NO_NEW_VERSION or status == cls.INTERNAL_ERROR
+        return status in [cls.NO_NEW_VERSION, cls.INTERNAL_ERROR]
 
 
 def calculate_diff(params):
@@ -32,7 +32,9 @@ def calculate_diff(params):
     if out.exists():
         status = Status.NOTHING_TO_DO
     else:
-        res = subprocess.run("mwm_diff_tool " + old.as_posix() + " " + new.as_posix() + " " + out.as_posix())
+        res = subprocess.run(
+            f"mwm_diff_tool {old.as_posix()} {new.as_posix()} {out.as_posix()}"
+        )
         if res.returncode != 0:
             return Status.INTERNAL_ERROR, params
 
@@ -63,7 +65,7 @@ def mwm_diff_calculation(data_dir, logger, depth):
 class DataDir(object):
     def __init__(self, mwm_name, new_version_dir, old_version_root_dir):
         self.mwm_name = mwm_name
-        self.diff_name = self.mwm_name + ".mwmdiff"
+        self.diff_name = f"{self.mwm_name}.mwmdiff"
 
         self.new_version_dir = Path(new_version_dir)
         self.new_version_path = Path(new_version_dir, mwm_name)

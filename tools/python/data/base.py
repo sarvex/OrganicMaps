@@ -50,20 +50,24 @@ def setup(
 ):
     with chdir(os.path.abspath(os.path.dirname(source_file))):
         setuptools.setup(
-            name="omim-data-{}".format(suffix),
+            name=f"omim-data-{suffix}",
             version=str(get_version()),
             author="Organic Maps",
             author_email="info@organicmaps.app",
-            description="This package contains {} data files.".format(suffix),
+            description=f"This package contains {suffix} data files.",
             url="https://github.com/organicmaps",
             packages=[] if packages is None else packages,
             package_dir={} if package_dir is None else package_dir,
             cmdclass={} if cmdclass is None else cmdclass,
-            classifiers=["License :: OSI Approved :: Apache Software License",]
-            + [
-                "Programming Language :: Python :: {}".format(supported_python)
-                for supported_python in supported_pythons
-            ],
+            classifiers=(
+                [
+                    "License :: OSI Approved :: Apache Software License",
+                ]
+                + [
+                    f"Programming Language :: Python :: {supported_python}"
+                    for supported_python in supported_pythons
+                ]
+            ),
             install_requires=install_requires or [],
             data_files=get_data_files(relative_data_paths),
         )

@@ -22,10 +22,9 @@ class PromoIds(object):
         with Pool() as pool:
             proposed_ids = pool.map(self._find, (n["id"] for n in nodes), chunksize=1)
 
-        countries_ids = [
+        if countries_ids := [
             ids for node_ids in proposed_ids for ids in node_ids["countries"]
-        ]
-        if countries_ids:
+        ]:
             country["top_countries_geo_ids"] = countries_ids
 
         for idx, node_ids in enumerate(proposed_ids):
@@ -41,7 +40,7 @@ class PromoIds(object):
         result = {"countries": [], "cities": []}
         ft2osm = load_osm2ft(self.osm2ft_path, leaf_id)
 
-        for feature in Mwm(os.path.join(self.mwm_path, leaf_id + ".mwm")):
+        for feature in Mwm(os.path.join(self.mwm_path, f"{leaf_id}.mwm")):
             osm_id = ft2osm.get(feature.index(), None)
             types = feature.readable_types()
 
@@ -99,8 +98,7 @@ class PromoIds(object):
         if t == "place-city":
             return 2
 
-        m = re.match(r"^place-city-capital?(-(?P<admin_level>\d+)|)$", t)
-        if m:
+        if m := re.match(r"^place-city-capital?(-(?P<admin_level>\d+)|)$", t):
             admin_level = int(m.groupdict("1")["admin_level"])
             if 1 <= admin_level <= 12:
                 return 14 - admin_level
@@ -111,15 +109,11 @@ def load_promo_ids(path):
     with open(path) as f:
         root = json.load(f)
 
-    ids = {}
-    for item in root["data"]:
-        ids[item["osmid"]] = item["paid_bundles_count"]
-
-    return ids
+    return {item["osmid"]: item["paid_bundles_count"] for item in root["data"]}
 
 
 def load_osm2ft(osm2ft_path, mwm_id):
-    osm2ft_name = os.path.join(osm2ft_path, mwm_id + ".mwm.osm2ft")
+    osm2ft_name = os.path.join(osm2ft_path, f"{mwm_id}.mwm.osm2ft")
     if not os.path.exists(osm2ft_name):
         logging.error(f"Cannot find {osm2ft_name}")
         sys.exit(3)

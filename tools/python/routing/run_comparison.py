@@ -19,7 +19,7 @@ def run_routes_builder_tool(*, omim, config_ini, versions):
         'vehicle_type': utils.get_vehicle_type(config_ini=config_ini)
     }
 
-    data_from_routes_builder_tool = dict()
+    data_from_routes_builder_tool = {}
 
     for version in versions:
         name = version['name']
@@ -66,7 +66,9 @@ def run_routing_quality_tool(*, omim, config_ini, old_versions, new_versions, da
 
             args['mapsme_results'] = new_version_task['dump_path']
             args['mapsme_old_results'] = old_version_task['dump_path']
-            args['save_results'] = os.path.join(results_base_dir, old_branch_hash + '__vs__' + new_branch_hash)
+            args['save_results'] = os.path.join(
+                results_base_dir, f'{old_branch_hash}__vs__{new_branch_hash}'
+            )
 
             omim.run(binary='routing_quality_tool', args=args)
             LOG.info(os.linesep, os.linesep)

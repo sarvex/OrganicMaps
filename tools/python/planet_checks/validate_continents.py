@@ -90,12 +90,11 @@ def check_continent_relation_labels(continents, continent_rel_id):
                 errors.append(f"Label {label_id} for continent relation "
                               f"{continent_rel_id} '{name}' "
                               f"is not a continent itself")
-            else:
-                if not is_the_same_continent(continents[label_id],
+            elif not is_the_same_continent(continents[label_id],
                                              cont_data):
-                    errors.append(f"Continent relation {continent_rel_id} "
-                                  f"and its label {label_id} "
-                                  "have different essential tags")
+                errors.append(f"Continent relation {continent_rel_id} "
+                              f"and its label {label_id} "
+                              "have different essential tags")
     return errors
 
 
@@ -181,13 +180,12 @@ if __name__ == "__main__":
     try:
         with open(options.continents_reference) as f:
             reference_continents = json.load(f)
-        reference_data_errors = check_continents_consistency(
+        if reference_data_errors := check_continents_consistency(
             reference_continents
-        )
-        if reference_data_errors:
+        ):
             logging.error("Reference continent data is inconsistent:")
             for error in reference_data_errors:
-                logging.critical("    " + error)
+                logging.critical(f"    {error}")
     except Exception as e:
         logging.critical(f"Cannot load reference continent data: {repr(e)}")
         sys.exit(1)
@@ -199,21 +197,19 @@ if __name__ == "__main__":
             with open(options.output, 'w') as f:
                 json.dump(current_continents, f, indent=2, ensure_ascii=False)
 
-        current_consistency_errors = check_continents_consistency(
+        if current_consistency_errors := check_continents_consistency(
             current_continents
-        )
-        if current_consistency_errors:
+        ):
             logging.error("Current continent data is inconsistent:")
             for error in current_consistency_errors:
-                logging.error("    " + error)
-        reference_comparison_errors = compare_continents_with_reference(
+                logging.error(f"    {error}")
+        if reference_comparison_errors := compare_continents_with_reference(
             current_continents, reference_continents
-        )
-        if reference_comparison_errors:
+        ):
             logging.error("Current continent data differs "
                           "from the reference one:")
             for error in reference_comparison_errors:
-                logging.error("    " + error)
+                logging.error(f"    {error}")
     except Exception as e:
         logging.critical(f"Cannot process current continent data: {repr(e)}")
         sys.exit(1)

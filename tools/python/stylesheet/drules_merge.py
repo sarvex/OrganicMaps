@@ -31,10 +31,7 @@ def read_drules(drules):
 
 def zooms_string(z1, z2):
   """Prints 'zoom N' or 'zooms N-M'."""
-  if z2 != z1:
-    return "zooms {}-{}".format(min(z1, z2), max(z1, z2))
-  else:
-    return "zoom {}".format(z1)
+  return f"zooms {min(z1, z2)}-{max(z1, z2)}" if z2 != z1 else f"zoom {z1}"
 
 def add_missing_zooms(dest, typ, source, target, high):
   """Checks zoom ranges for source and target, and appends as much sources to
@@ -45,13 +42,17 @@ def add_missing_zooms(dest, typ, source, target, high):
     scales = (source.scale, target.scale)
 
   if scales[1] < scales[0]:
-    print("{}: missing {} {}".format(typ, 'high' if high else 'low', zooms_string(scales[1], scales[0] - 1)))
+    print(
+        f"{typ}: missing {'high' if high else 'low'} {zooms_string(scales[1], scales[0] - 1)}"
+    )
     for z in range(scales[1], scales[0]):
       fix = copy.deepcopy(source)
       fix.scale = z
       dest[typ].append(fix)
   elif scales[1] > scales[0]:
-    print("{}: extra {} {}".format(typ, 'high' if high else 'low', zooms_string(scales[0], scales[1] - 1)))
+    print(
+        f"{typ}: extra {'high' if high else 'low'} {zooms_string(scales[0], scales[1] - 1)}"
+    )
 
 def create_diff(zooms1, zooms2):
   """Calculates difference between zoom dicts, and returns a tuple:
@@ -67,11 +68,15 @@ def create_diff(zooms1, zooms2):
       add_missing_zooms(add_elements_low,  typ, zooms1[typ][0], zooms2[typ][0], False)
       add_missing_zooms(add_elements_high, typ, zooms1[typ][1], zooms2[typ][1], True)
     else:
-      print("{}: not found in the alternative style; {}".format(typ, zooms_string(zooms1[typ][0].scale, zooms1[typ][1].scale)))
+      print(
+          f"{typ}: not found in the alternative style; {zooms_string(zooms1[typ][0].scale, zooms1[typ][1].scale)}"
+      )
 
   add_types = []
   for typ in sorted(seen):
-    print("{}: missing completely; {}".format(typ, zooms_string(zooms2[typ][0].scale, zooms2[typ][1].scale)))
+    print(
+        f"{typ}: missing completely; {zooms_string(zooms2[typ][0].scale, zooms2[typ][1].scale)}"
+    )
     cont = drules_struct_pb2.ClassifElementProto()
     cont.name = typ
     for z in range(zooms2[typ][0].scale, zooms2[typ][1].scale):
@@ -106,7 +111,9 @@ def apply_diff(drules, diff):
 
 if __name__ == '__main__':
   if len(sys.argv) <= 3:
-    print('Usage: {} <drules1.bin> <drules2.bin> <drules_out.bin> [drules_out.txt]'.format(sys.argv[0]))
+    print(
+        f'Usage: {sys.argv[0]} <drules1.bin> <drules2.bin> <drules_out.bin> [drules_out.txt]'
+    )
     sys.exit(1)
 
   drules1 = drules_struct_pb2.ContainerProto()

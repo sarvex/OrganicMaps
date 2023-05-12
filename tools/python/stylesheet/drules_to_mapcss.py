@@ -21,7 +21,7 @@ files = {
 MINIMAL_WIDTH = .1
 LAST_ZOOM = 17
 
-FLAVOUR = set(["JOSM"])  # "JOSM"
+FLAVOUR = {"JOSM"}
 FLAVOUR = []
 
 
@@ -34,10 +34,9 @@ def number(f):
 def color_to_properties(color, prefix=""):
     if prefix:
         prefix += "-"
-    colorvar = prefix + "color"
-    opacityvar = prefix + "opacity"
-    dd = {}
-    dd[colorvar] = hex_to_color_name("#" + hex(int(color) % (0x1000000))[2:])  # leave only last 24 bits
+    colorvar = f"{prefix}color"
+    opacityvar = f"{prefix}opacity"
+    dd = {colorvar: hex_to_color_name(f"#{hex(int(color) % 16777216)[2:]}")}
     opacity = (255 - (int(color) >> 24)) / 255.
     if opacity != 1:
         dd[opacityvar] = number(opacity)
@@ -428,7 +427,7 @@ if True:
             if i[1] == i[2] and i[1] == '':
                 zmark = ''
                 dash = ''
-            return "%s%s%s%s%s%s%s" % (i[0], zmark, i[1], dash, i[2], i[3], i[4])
+            return f"{i[0]}{zmark}{i[1]}{dash}{i[2]}{i[3]}{i[4]}"
 
         tv['sel'] = [format_string(i) for i in tv['sel']]
         print (",\n").join([i for i in tv['sel']])

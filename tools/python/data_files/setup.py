@@ -21,10 +21,16 @@ with chdir(os.path.abspath(os.path.dirname(__file__))):
         description="This package is a library for dealing with data files.",
         url="https://github.com/organicmaps",
         package_dir={"data_files": ""},
-        packages=["data_files",],
-        classifiers=["License :: OSI Approved :: Apache Software License",]
-        + [
-            "Programming Language :: Python :: {}".format(supported_python)
-            for supported_python in supported_pythons
+        packages=[
+            "data_files",
         ],
+        classifiers=(
+            [
+                "License :: OSI Approved :: Apache Software License",
+            ]
+            + [
+                f"Programming Language :: Python :: {supported_python}"
+                for supported_python in supported_pythons
+            ]
+        ),
     )

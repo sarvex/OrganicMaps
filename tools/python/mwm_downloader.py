@@ -88,7 +88,9 @@ def download_map(arg_tuple):
         if download_file(url, filename):
             return True
         else:
-            logging.error('Failed to load mwm \'{}\' from server \'{}\''.format(mwm_name, server_prefix))
+            logging.error(
+                f"Failed to load mwm \'{mwm_name}\' from server \'{server_prefix}\'"
+            )
     return False
 
 
@@ -175,4 +177,4 @@ if __name__ == '__main__':
 
     if not args.quiet:
         end_time = time.time()
-        print('Finished in {} s.'.format(round(end_time - start_time)))
+        print(f'Finished in {round(end_time - start_time)} s.')

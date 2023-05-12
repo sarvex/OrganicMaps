@@ -106,8 +106,7 @@ def grep_ios_candidates():
     ret = exec_shell(grep)
     logging.info("Found in iOS candidates: {0}".format(len(ret)))
 
-    strs = strings_from_grepped(ret, IOS_CANDIDATES_RE)
-    return strs
+    return strings_from_grepped(ret, IOS_CANDIDATES_RE)
 
 
 def get_hardcoded():
@@ -149,7 +148,7 @@ def strings_from_grepped_tuple(grepped, regexp):
 
 
 def parenthesize(strings):
-    return set("[{}]".format(s) for s in strings)
+    return {f"[{s}]" for s in strings}
 
 
 def write_filtered_strings_txt(filtered, filepath, languages=None):
@@ -294,8 +293,8 @@ def do_single(args):
     filtered = ios
     filtered.update(android)
     filtered.update(core)
-    n_android = sum([1 for tags in new_tags.values() if "android" in tags])
-    n_ios = sum([1 for tags in new_tags.values() if "ios" in tags])
+    n_android = sum(1 for tags in new_tags.values() if "android" in tags)
+    n_ios = sum(1 for tags in new_tags.values() if "ios" in tags)
 
     logging.info("Total strings grepped: {0}\tiOS: {1}\tandroid: {2}".format(
         len(filtered), n_android, n_ios))
@@ -317,8 +316,9 @@ def do_single(args):
 
     if args.generate:
         exec_shell(
-            "{}/unix/generate_localizations.sh".format(OMIM_ROOT),
-            args.output, args.output
+            f"{OMIM_ROOT}/unix/generate_localizations.sh",
+            args.output,
+            args.output,
         )
 
 
@@ -345,9 +345,7 @@ def find_unused():
 def do_missing(args):
     ios = set(grep_ios())
     strings_txt_keys = set(StringsTxt().translations.keys())
-    missing = ios - strings_txt_keys
-
-    if missing:
+    if missing := ios - strings_txt_keys:
         for m in missing:
             logging.info(m)
         exit(1)
@@ -365,7 +363,7 @@ def do_candidates(args):
 
 
 def do_ios_suspects(args):
-    grep = "grep -re -I 'L(' {}/iphone/*".format(OMIM_ROOT)
+    grep = f"grep -re -I 'L(' {OMIM_ROOT}/iphone/*"
     suspects = exec_shell(grep)
     SUSPECT_RE = re.compile(r"(.*?):.*?\WL\(([^@].*?)\)")
     strings = strings_from_grepped(suspects, SUSPECT_RE)
@@ -376,8 +374,7 @@ def do_ios_suspects(args):
 def find_omim():
     my_path = abspath(__file__)
     tools_index = my_path.rfind("/tools/python")
-    omim_path = my_path[:tools_index]
-    return omim_path
+    return my_path[:tools_index]
 
 
 def read_hardcoded_categories(a_path):

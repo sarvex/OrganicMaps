@@ -26,42 +26,35 @@ debug_output = False
 
 # Read index file which contains program to shaders bindings.
 def read_index_file(file_path, programs_order):
-    gpu_programs = dict()
+    gpu_programs = {}
     with open(file_path, 'r') as f:
-        index = 0
-        for line in f:
+        for index, line in enumerate(f):
             line_parts = line.strip().split()
             if len(line_parts) != 3:
-                print('Incorrect GPU program definition : ' + line)
+                print(f'Incorrect GPU program definition : {line}')
                 exit(1)
 
             if line_parts[0] != programs_order[index]:
-                print('Incorrect GPU program order or name : ' + line)
+                print(f'Incorrect GPU program order or name : {line}')
                 exit(1)
 
             vertex_shader = next(f for f in line_parts if f.endswith(VERTEX_SHADER_EXT))
             fragment_shader = next(f for f in line_parts if f.endswith(FRAG_SHADER_EXT))
 
             if not vertex_shader:
-                print('Vertex shader not found in GPU program definition : ' + line)
+                print(f'Vertex shader not found in GPU program definition : {line}')
                 exit(1)
 
             if not fragment_shader:
-                print('Fragment shader not found in GPU program definition : ' + line)
+                print(f'Fragment shader not found in GPU program definition : {line}')
                 exit(1)
 
-            if line_parts[0] in gpu_programs.keys():
-                print('More than one definition of %s gpu program' % line_parts[0])
+            if line_parts[0] in gpu_programs:
+                print(f'More than one definition of {line_parts[0]} gpu program')
                 exit(1)
 
             gpu_programs[index] = (vertex_shader, fragment_shader, line_parts[0])
-            index += 1
-
-    gpu_programs_cache = dict()
-    for (k, v) in gpu_programs.items():
-        gpu_programs_cache[v[2]] = (v[0], v[1], k)
-
-    return gpu_programs_cache
+    return {v[2]: (v[0], v[1], k) for k, v in gpu_programs.items()}
 
 
 # Read hpp-file with programs enumeration.
@@ -84,8 +77,7 @@ def read_programs_file(file_path):
 
 
 def drop_variable_initialization(line):
-    equal_found = line.find('=')
-    if equal_found:
+    if equal_found := line.find('='):
         return line[:equal_found - 1]
     return line.replace(';', '')
 
@@ -110,7 +102,7 @@ def get_program(line):
 def read_program_params_file(file_path):
     program_params = []
     programs = []
-    result = dict()
+    result = {}
     with open(file_path, 'r') as f:
         block_found = False
         for line in f:
@@ -125,11 +117,9 @@ def read_program_params_file(file_path):
                     result[p] = program_params
                 continue
             if block_found:
-                param = get_program_param(line)
-                if param:
+                if param := get_program_param(line):
                     program_params.append(param.split(' '))
-                program = get_program(line)
-                if program:
+                if program := get_program(line):
                     programs.append(program)
     return result
 
@@ -144,18 +134,18 @@ def read_shaders_lib_file(file_path):
 
     common_index = shaders_lib_content.find(SHADERS_LIB_COMMON_PATTERN)
     if common_index < 0:
-        print('Common functions block is not found in ' + file_path)
+        print(f'Common functions block is not found in {file_path}')
         exit(1)
     vs_index = shaders_lib_content.find(SHADERS_LIB_VS_PATTERN)
     if vs_index < 0:
-        print('Vertex shaders functions block is not found in ' + file_path)
+        print(f'Vertex shaders functions block is not found in {file_path}')
         exit(1)
     fs_index = shaders_lib_content.find(SHADERS_LIB_FS_PATTERN)
     if fs_index < 0:
-        print('Vertex shaders functions block is not found in ' + file_path)
+        print(f'Vertex shaders functions block is not found in {file_path}')
         exit(1)
     if not (common_index < vs_index < fs_index):
-        print('Order of functions block is incorrect in ' + file_path)
+        print(f'Order of functions block is incorrect in {file_path}')
         exit(1)
 
     shaders_library[SHADERS_LIB_COMMON_INDEX] = shaders_lib_content[common_index:vs_index - 1]
@@ -207,7 +197,7 @@ def get_shader_line(line, layout_counters, is_fragment_shader):
 
 
 def get_size_by_type(type):
-    if type == 'float' or type == 'int':
+    if type in ['float', 'int']:
         return 1
     if type == 'vec2':
         return 2
@@ -217,16 +207,15 @@ def get_size_by_type(type):
         return 4
     if type == 'mat4':
         return 16
-    print('Type is not supported' + type)
+    print(f'Type is not supported{type}')
     exit(1)
 
 
 def get_subscript(offset, param):
     symbols = ['x', 'y', 'z', 'w']
-    subscript = ''
-    for i in range(0, get_size_by_type(param[0])):
-        subscript += symbols[offset + i]
-    return subscript
+    return ''.join(
+        symbols[offset + i] for i in range(0, get_size_by_type(param[0]))
+    )
 
 
 def write_uniform_block(output_file, program_params):
@@ -238,19 +227,18 @@ def write_uniform_block(output_file, program_params):
         sz = get_size_by_type(p[0])
         if sz % 4 == 0:
             groups.append((p[0], p[1], [p]))
+        elif c + sz < 4:
+            group_params.append(p)
+            c += sz
+        elif c + sz == 4:
+            group_params.append(p)
+            groups.append(('vec4', 'u_grouped{0}'.format(group_index), group_params))
+            group_index += 1
+            group_params = []
+            c = 0
         else:
-            if c + sz < 4:
-                group_params.append(p)
-                c += sz
-            elif c + sz == 4:
-                group_params.append(p)
-                groups.append(('vec4', 'u_grouped{0}'.format(group_index), group_params))
-                group_index += 1
-                group_params = []
-                c = 0
-            else:
-                print('Must be possible to unite sequential variables to vec4')
-                exit(1)
+            print('Must be possible to unite sequential variables to vec4')
+            exit(1)
     if c != 0:
         groups.append(('vec4', 'u_grouped{0}'.format(group_index), group_params))
 
@@ -272,10 +260,14 @@ def write_uniform_block(output_file, program_params):
 
 
 def get_size_of_attributes_block(lines_before_main):
-    for i, line in reversed(list(enumerate(lines_before_main))):
-        if line.find('layout (location') >= 0:
-            return i + 1
-    return len(lines_before_main)
+    return next(
+        (
+            i + 1
+            for i, line in reversed(list(enumerate(lines_before_main)))
+            if line.find('layout (location') >= 0
+        ),
+        len(lines_before_main),
+    )
 
 
 def generate_spirv_compatible_glsl_shader(output_file, shader_file, shader_dir, shaders_library,
@@ -336,7 +328,7 @@ def generate_spirv_compatible_glsl_shader(output_file, shader_file, shader_dir, 
             for idx, s in enumerate(layout_counters[SAMPLERS][1]):
                 output_file.write('layout (binding = {0}) {1}\n'.format(samplers_offset + idx, s))
                 sampler = {'name': s[s.find('u_'):-1], 'idx': samplers_offset + idx, 'frag':int(is_fragment_shader)}
-                if not sample_index in reflection_dict:
+                if sample_index not in reflection_dict:
                     reflection_dict[sample_index] = [sampler]
                 else:
                     reflection_dict[sample_index].append(sampler)
@@ -383,7 +375,7 @@ def generate_shader(shader, shader_dir, generation_dir, shaders_library, program
     with open(output_path, 'w') as file:
         generate_spirv_compatible_glsl_shader(file, shader, shader_dir, shaders_library,
                                               program_params, layout_counters, reflection_dict)
-    spv_path = output_path + '.spv'
+    spv_path = f'{output_path}.spv'
     try:
         execute_external([glslc_path, '-c', output_path, '-o', spv_path, '-std=310es', '--target-env=vulkan'])
         if debug_output:
@@ -391,7 +383,17 @@ def generate_shader(shader, shader_dir, generation_dir, shaders_library, program
             debug_path = os.path.join(debug_dir, output_name)
             if not os.path.exists(debug_dir):
                 os.makedirs(debug_dir)
-            execute_external([glslc_path, '-S', output_path, '-o', debug_path + '.spv.txt', '-std=310es','--target-env=vulkan'])
+            execute_external(
+                [
+                    glslc_path,
+                    '-S',
+                    output_path,
+                    '-o',
+                    f'{debug_path}.spv.txt',
+                    '-std=310es',
+                    '--target-env=vulkan',
+                ]
+            )
             os.rename(output_path, debug_path)
         else:
             os.remove(output_path)
@@ -427,7 +429,9 @@ def write_shader_to_pack(pack_file, shader_file_name):
 
 if __name__ == '__main__':
     if len(sys.argv) < 7:
-        print('Usage : ' + sys.argv[0] + ' <shader_dir> <index_file> <programs_file> <program_params_file> <shaders_lib> <generation_dir> <glslc_path> [--debug]')
+        print(
+            f'Usage : {sys.argv[0]} <shader_dir> <index_file> <programs_file> <program_params_file> <shaders_lib> <generation_dir> <glslc_path> [--debug]'
+        )
         exit(1)
 
     shader_dir = sys.argv[1]
@@ -453,14 +457,14 @@ if __name__ == '__main__':
     current_offset = 0
     with open(os.path.join(generation_dir, 'shaders_pack.spv'), 'wb') as pack_file:
         for (k, v) in gpu_programs_cache.items():
-            if not k in program_params:
-                print('Program params were not found for the shader ' + k)
+            if k not in program_params:
+                print(f'Program params were not found for the shader {k}')
                 exit(1)
             if not check_varying_consistency(os.path.join(shader_dir, v[0]), os.path.join(shader_dir, v[1])):
                 print('Varyings must be in the same order in VS and FS. Shaders: {0}, {1} / Program: {2}.'.format(v[0], v[1], k))
                 exit(1)
-            layout_counters = {IN: 0, OUT: 0, UNIFORMS: 0, SAMPLERS: [0, list()]}
-            reflection_dict = {'prg': v[2], 'info': dict()}
+            layout_counters = {IN: 0, OUT: 0, UNIFORMS: 0, SAMPLERS: [0, []]}
+            reflection_dict = {'prg': v[2], 'info': {}}
             vs_offset = write_shader_to_pack(pack_file, generate_shader(v[0], shader_dir, generation_dir,
                                                                         shaders_library, k, program_params[k],
                                                                         layout_counters, k + VERTEX_SHADER_EXT_OUT,

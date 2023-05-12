@@ -3,8 +3,7 @@ import sys, re
 
 RE_STAT = re.compile(r'(?:\d+\. )?([\w:|-]+?)\|: size = (\d+); count = (\d+); length = ([0-9.e+-]+) m; area = ([0-9.e+-]+) m.\s*')
 def parse_and_add(data, line):
-  m = RE_STAT.match(line)
-  if m:
+  if m := RE_STAT.match(line):
     data[m.group(1)] = int(m.group(3))
 
 if len(sys.argv) < 3:

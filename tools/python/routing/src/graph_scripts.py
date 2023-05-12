@@ -14,10 +14,8 @@ plt.hist(a, bins='auto')  # arguments are passed to np.histogram
 plt.title("{title}")
 plt.show()'''
 
-    fh = open(save_path, 'w')
-    fh.write(output)
-    fh.close()
-
+    with open(save_path, 'w') as fh:
+        fh.write(output)
     LOG.info(f'Run: {save_path}, to look at {title} distribution.')
 
 
@@ -50,8 +48,6 @@ pylab.legend()
 pylab.tight_layout()
 pylab.show()
 '''
-    fh = open(save_path, 'w')
-    fh.write(output)
-    fh.close()
-
+    with open(save_path, 'w') as fh:
+        fh.write(output)
     LOG.info(f'Run: {save_path}, to look at {xlabel} x {ylabel} plot.')

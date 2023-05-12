@@ -44,22 +44,24 @@ def query_osm(osm_type, osm_id):
             cache = json.load(f)
     else:
         cache = {}
-    k = '{}{}'.format(osm_type, osm_id)
+    k = f'{osm_type}{osm_id}'
     if k in cache:
         coord = cache[k]
         return (coord[1], coord[0])
 
     OSM_API_SERVER = 'https://api.openstreetmap.org/api/0.6'
     try:
-        r = urllib.request.urlopen('{}/{}/{}{}'.format(
-            OSM_API_SERVER, osm_type, osm_id, '/full' if osm_type != 'node' else ''))
+        r = urllib.request.urlopen(
+            f"{OSM_API_SERVER}/{osm_type}/{osm_id}{'/full' if osm_type != 'node' else ''}"
+        )
     except OSError as e:
         logging.warn('Could not download %s %s: %s', osm_type, osm_id, e)
         return None
     xml = etree.parse(r)
-    nodes = {}
-    for nd in xml.findall('node'):
-        nodes[nd.get('id')] = (float(nd.get('lat')), float(nd.get('lon')))
+    nodes = {
+        nd.get('id'): (float(nd.get('lat')), float(nd.get('lon')))
+        for nd in xml.findall('node')
+    }
     ways = {}
     for way in xml.findall('way'):
         coord = [0, 0]
@@ -103,17 +105,14 @@ def query_osm(osm_type, osm_id):
 def get_coord(tags):
     lat = tags.pop('lat', None)
     lon = tags.pop('lon', None)
-    if lat is None or lon is None:
-        return None
-    return [float(lon), float(lat)]
+    return None if lat is None or lon is None else [float(lon), float(lat)]
 
 
 def get_type(tags):
     global TYPES
-    for t in TYPES:
-        if tags.get(t[0]) == t[1]:
-            return t[min(len(t)-1, 2)]
-    return None
+    return next(
+        (t[min(len(t) - 1, 2)] for t in TYPES if tags.get(t[0]) == t[1]), None
+    )
 
 
 def make_feature(coord, ftype, tags):
@@ -122,10 +121,7 @@ def make_feature(coord, ftype, tags):
     if ftype in type_to_colour:
         colour = type_to_colour[ftype]
     else:
-        if type_to_colour:
-            i = max(type_to_colour.values())
-        else:
-            i = -1
+        i = max(type_to_colour.values()) if type_to_colour else -1
         if i < len(COLOURS) - 1:
             colour = i + 1
             type_to_colour[ftype] = colour

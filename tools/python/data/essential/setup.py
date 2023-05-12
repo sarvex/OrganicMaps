@@ -41,5 +41,5 @@ setup(
         "unicode_blocks.txt",
         "visibility.txt",
     ],
-    install_requires=["omim-data-files=={}".format(get_version())]
+    install_requires=[f"omim-data-files=={get_version()}"],
 )

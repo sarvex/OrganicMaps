@@ -46,15 +46,14 @@ def read_languages(strings_name):
     RE_LANG = re.compile(r'^ *([\w-]+) *=')
     with open(strings_name, "r") as langs_file:
         for line in langs_file:
-            m = RE_LANG.search(line)
-            if m:
-                langs.add(m.group(1))
+            if m := RE_LANG.search(line):
+                langs.add(m[1])
     return langs
 
 
 def make_languages_hpp(langs, hpp_name):
-    print ("Creating {}".format(hpp_name))
-    lang_str = ",\n".join(["  \"{}\"".format(language) for language in sorted(langs)])
+    print(f"Creating {hpp_name}")
+    lang_str = ",\n".join([f'  \"{language}\"' for language in sorted(langs)])
     with open(hpp_name, "w") as hpp_file:
         hpp_file.write(LANGUAGES_HPP_TEMPLATE.format(lang_list_size=len(langs), lang_list=lang_str))
 

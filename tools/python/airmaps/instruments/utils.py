@@ -14,7 +14,7 @@ from maps_generator.maps_generator import run_generation
 def put_current_date_in_filename(filename):
     path, name = os.path.split(filename)
     parts = name.split(".", maxsplit=1)
-    parts[0] += f"__{datetime.today().strftime('%Y_%m_%d')}"
+    parts[0] += f"__{datetime.now().strftime('%Y_%m_%d')}"
     return os.path.join(path, ".".join(parts))
 
 

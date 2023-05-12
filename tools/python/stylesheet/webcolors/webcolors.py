@@ -452,10 +452,10 @@ def normalize_hex(hex_value):
     try:
         hex_digits = HEX_COLOR_RE.match(hex_value).groups()[0]
     except AttributeError:
-        raise ValueError("'%s' is not a valid hexadecimal color value." % hex_value)
+        raise ValueError(f"'{hex_value}' is not a valid hexadecimal color value.")
     if len(hex_digits) == 3:
         hex_digits = ''.join(map(lambda s: 2 * s, hex_digits))
-    return '#%s' % hex_digits.lower()
+    return f'#{hex_digits.lower()}'
 
 
 ######################################################################
@@ -501,13 +501,14 @@ def name_to_hex(name, spec='css3'):
 
     """
     if spec not in SUPPORTED_SPECIFICATIONS:
-        raise TypeError("'%s' is not a supported specification for color name lookups; supported specifications are: %s." % (spec,
-                                                                                                                             ', '.join(SUPPORTED_SPECIFICATIONS)))
+        raise TypeError(
+            f"'{spec}' is not a supported specification for color name lookups; supported specifications are: {', '.join(SUPPORTED_SPECIFICATIONS)}."
+        )
     normalized = name.lower()
     try:
-        hex_value = globals()['%s_names_to_hex' % spec][normalized]
+        hex_value = globals()[f'{spec}_names_to_hex'][normalized]
     except KeyError:
-        raise ValueError("'%s' is not defined as a named color in %s." % (name, spec))
+        raise ValueError(f"'{name}' is not defined as a named color in {spec}.")
     return hex_value
 
 
@@ -609,13 +610,14 @@ def hex_to_name(hex_value, spec='css3'):
 
     """
     if spec not in SUPPORTED_SPECIFICATIONS:
-        raise TypeError("'%s' is not a supported specification for color name lookups; supported specifications are: %s." % (spec,
-                                                                                                                             ', '.join(SUPPORTED_SPECIFICATIONS)))
+        raise TypeError(
+            f"'{spec}' is not a supported specification for color name lookups; supported specifications are: {', '.join(SUPPORTED_SPECIFICATIONS)}."
+        )
     normalized = normalize_hex(hex_value)
     try:
-        name = globals()['%s_hex_to_names' % spec][normalized]
+        name = globals()[f'{spec}_hex_to_names'][normalized]
     except KeyError:
-        raise ValueError("'%s' has no defined color name in %s." % (hex_value, spec))
+        raise ValueError(f"'{hex_value}' has no defined color name in {spec}.")
     return name
 
 
@@ -856,9 +858,9 @@ def whatever_to_rgb(string):
         except ValueError:
             try:
                 if string[:3] == "rgb":
-                    return tuple([float(i) for i in string[4:-1].split(",")][0:3])
+                    return tuple([float(i) for i in string[4:-1].split(",")][:3])
             except:
-                return hex_to_rgb("#" + md5(string).hexdigest()[:6])
+                return hex_to_rgb(f"#{md5(string).hexdigest()[:6]}")
 
 
 def whatever_to_hex(string):

@@ -3,7 +3,7 @@ import math
 def to_rgb(color_str):
     if len(color_str) != 6:
         return (0, 0, 0)
-    r = int(color_str[0:2], 16)
+    r = int(color_str[:2], 16)
     g = int(color_str[2:4], 16)
     b = int(color_str[4:], 16)
     return (r, g, b)
@@ -33,9 +33,7 @@ def to_xyz(rgb_array):
 
 #https://en.wikipedia.org/wiki/Lab_color_space#CIELAB
 def lab_pivot(n):
-    if n > 0.008856:
-        return n ** (1.0/3.0)
-    return (903.3 * n + 16.0) / 116.0
+    return n ** (1.0/3.0) if n > 0.008856 else (903.3 * n + 16.0) / 116.0
 
 
 def to_lab(rgb_array):
@@ -44,8 +42,7 @@ def to_lab(rgb_array):
     y = lab_pivot(xyz[1] / 100.0)
     z = lab_pivot(xyz[2] / 108.883)
     l = 116.0 * y - 16.0
-    if l < 0.0:
-        l = 0.0
+    l = max(l, 0.0)
     a = 500.0 * (x - y)
     b = 200.0 * (y - z)
     return (l, a, b)
@@ -74,10 +71,7 @@ def cie94(ref_color, src_color):
     c2 = math.sqrt(lab_src[0] * lab_src[0] + lab_src[1] * lab_src[1])
     deltaC = c1 - c2
     deltaH = deltaA * deltaA + deltaB * deltaB - deltaC * deltaC
-    if deltaH < 0.0:
-        deltaH = 0.0
-    else:
-        deltaH = math.sqrt(deltaH)
+    deltaH = 0.0 if deltaH < 0.0 else math.sqrt(deltaH)
     # cold tones if a color is more bluish.
     Kl = 1.0
     K1 = 0.045
@@ -88,9 +82,7 @@ def cie94(ref_color, src_color):
     deltaCkcsc = deltaC / sc
     deltaHkhsh = deltaH / sh
     i = deltaLKlsl * deltaLKlsl + deltaCkcsc * deltaCkcsc + deltaHkhsh * deltaHkhsh
-    if i < 0:
-        return 0.0
-    return math.sqrt(i)
+    return 0.0 if i < 0 else math.sqrt(i)
 
 
 class Palette:

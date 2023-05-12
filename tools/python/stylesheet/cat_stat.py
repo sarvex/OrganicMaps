@@ -34,8 +34,7 @@ def parse_mapcss_row(row):
         elif len(i) == 2:
             kv.append(tuple(i))
         elif len(i) == 3:
-            kv.append((i[0], i[1]))
-            kv.append((i[1], i[2]))
+            kv.extend(((i[0], i[1]), (i[1], i[2])))
     return cl, kv
 
 
@@ -74,7 +73,7 @@ def find_in_taginfo(cur, kv, seen):
                 cur.execute('select count_all from tags where key = ? and value = ?', kv[1])
                 seen.add(kv[1])
             row = cur.fetchone()
-            sys.stderr.write('Failed query for {}, trying simple: {}\n'.format(kv, row))
+            sys.stderr.write(f'Failed query for {kv}, trying simple: {row}\n')
             if row is not None:
                 result = row[0]
     return result
@@ -84,8 +83,10 @@ def find_popular_taginfo(cur, seen):
     """Finds popular values that have not been seen, among some popular tags."""
     RE_VALID = re.compile(r'^[a-z_]+$')
     keys = ('amenity', 'shop', 'craft', 'emergency', 'office', 'highway', 'railway', 'tourism', 'historic', 'leisure', 'man_made')
-    cur.execute("select key, value, count_all from tags where key in ({}) and count_all > 1000 order by count_all desc".
-                format(','.join(['?' for x in keys])), keys)
+    cur.execute(
+        f"select key, value, count_all from tags where key in ({','.join(['?' for _ in keys])}) and count_all > 1000 order by count_all desc",
+        keys,
+    )
     for row in cur:
         if (row[0], row[1]) not in seen and row[1] not in ('yes', 'no') and RE_VALID.match(row[1]):
             yield row
@@ -114,7 +115,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) < 2:
         print('Calculates tag usage and categories stats, suggesting new types.')
-        print('Usage: {} <path_to_taginfo.db> [<path_to_omim_data>]'.format(sys.argv[0]))
+        print(f'Usage: {sys.argv[0]} <path_to_taginfo.db> [<path_to_omim_data>]')
         print('To obtain taginfo files visit https://taginfo.openstreetmap.org/download')
         print('On Linux you can obtain this files by following operations')
         print('wget https://taginfo.openstreetmap.org/download/taginfo-db.db.bz2')
@@ -144,10 +145,10 @@ if __name__ == '__main__':
 
     # Read editor.config
     ed_root = etree.parse(os.path.join(data_path, 'editor.config')).getroot()
-    editor = {}
-    for field in ed_root[0].find('types').findall('type'):
-        editor[field.get('id')] = EditStat(field.get('editable'), field.get('can_add'))
-
+    editor = {
+        field.get('id'): EditStat(field.get('editable'), field.get('can_add'))
+        for field in ed_root[0].find('types').findall('type')
+    }
     # Read mapcss-mapping.csv
     classificator = {}
     with open(os.path.join(data_path, 'mapcss-mapping.csv'), 'r') as f:
@@ -174,7 +175,7 @@ if __name__ == '__main__':
         dr = drawn.get(cl, no_drawn)
         row.extend([b2t(dr.is_drawn, 'v'), b2t(dr.has_icon, 'i'), b2t(dr.is_area, 'a'), b2t(dr.has_name, 'n')])
         row.append(find_in_taginfo(cursor, classificator[cl], seen))
-        row.append(' + '.join('{}={}'.format(k[0], k[1]) for k in classificator[cl]))
+        row.append(' + '.join(f'{k[0]}={k[1]}' for k in classificator[cl]))
         w.writerow(row)
 
     try:
@@ -185,7 +186,7 @@ if __name__ == '__main__':
     w.writerow([])
     w.writerow(['tag'] + ['']*6 + ['usages', 'description'])
     for row in find_popular_taginfo(cursor, seen):
-        r = ['{}={}'.format(row[0], row[1])] + ['']*6 + [row[2]]
+        r = [f'{row[0]}={row[1]}'] + ['']*6 + [row[2]]
         if wcur is not None:
             wcur.execute("select description from wikipages where key=? and value=? and lang is 'en'", (row[0], row[1]))
             wrow = wcur.fetchone()

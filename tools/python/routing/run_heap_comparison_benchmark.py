@@ -33,7 +33,7 @@ def get_max_mb_usage(*, log_file):
             matched = re.match(r'.*[(\s](\d+) MB currently in use.*', line)
             if matched is None:
                 continue
-            mb = int(matched.group(1))
+            mb = int(matched[1])
             max_mb = max(max_mb, mb)
 
     return max_mb
@@ -41,11 +41,13 @@ def get_max_mb_usage(*, log_file):
 
 def run_routes_builder_tool_one_route(omim, version, config_ini, id, route_line):
     dump_path = get_version_dump_path(config_ini=config_ini, version=version)
-    routes_file = os.path.join(dump_path, str(id) + '.route')
-    output_file = os.path.join(dump_path, str(id) + '.log')
+    routes_file = os.path.join(dump_path, f'{str(id)}.route')
+    output_file = os.path.join(dump_path, f'{str(id)}.log')
     create_file_with_line(file=routes_file, line=route_line)
-    heap_prof_path = os.path.join(get_version_heapprof_dump_path(config_ini=config_ini, version=version),
-                                  str(id) + '.hprof')
+    heap_prof_path = os.path.join(
+        get_version_heapprof_dump_path(config_ini=config_ini, version=version),
+        f'{str(id)}.hprof',
+    )
 
     args = {
         'resources_path': omim.data_path,
@@ -71,7 +73,7 @@ def run_routes_builder_tool_one_route(omim, version, config_ini, id, route_line)
 
 def run_heap_comparison(*, omim, config_ini, versions):
     routes_file = config_ini.read_value_by_path(path=['PATHS', 'RoutesFile'])
-    data_from_heap_comparison = dict()
+    data_from_heap_comparison = {}
 
     for version in versions:
         name = version['name']
@@ -103,10 +105,7 @@ def run_heap_comparison(*, omim, config_ini, versions):
         with Pool(omim.cpu_count) as p:
             version_result = p.starmap(run_routes_builder_tool_one_route, pool_args)
 
-            results = dict()
-            for result in version_result:
-                results[result['id']] = result['max_mb_usage']
-
+            results = {result['id']: result['max_mb_usage'] for result in version_result}
             data_from_heap_comparison[branch_hash] = {
                 'version': version,
                 'results': results
@@ -131,8 +130,6 @@ def get_median_by_key_in_diff(*, diff, key):
 
 
 def create_diff_mb_percents_plots(diff):
-    plots = []
-
     percents_in_conventional_units = 5
     mbs_in_conventional_units = 10
 
@@ -141,19 +138,18 @@ def create_diff_mb_percents_plots(diff):
 
     x_list = list(range(0, len(diff)))
 
-    plots.append({
-        'legend': f'Diff megabytes in conventional units = {percents_in_conventional_units}',
-        'points_x': x_list,
-        'points_y': diff_mb
-    })
-
-    plots.append({
-        'legend': f'Diff percents in conventional units = {mbs_in_conventional_units}',
-        'points_x': x_list,
-        'points_y': diff_percent
-    })
-
-    return plots
+    return [
+        {
+            'legend': f'Diff megabytes in conventional units = {percents_in_conventional_units}',
+            'points_x': x_list,
+            'points_y': diff_mb,
+        },
+        {
+            'legend': f'Diff percents in conventional units = {mbs_in_conventional_units}',
+            'points_x': x_list,
+            'points_y': diff_percent,
+        },
+    ]
 
 
 # Calculate some stat comparison about maximum memory usage in two versions, creates some plots to look at this stat

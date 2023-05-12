@@ -40,15 +40,13 @@ class OsmIdCode:
 
 def unpack_osmid(num):
     typ = OsmIdCode.get_type(num)
-    if typ is None:
-        return None
-    return typ, OsmIdCode.get_id(num)
+    return None if typ is None else (typ, OsmIdCode.get_id(num))
 
 
 def _read_osm2ft_v0(f, ft2osm, tuples):
     count = read_varuint(f)
     result = {}
-    for i in range(count):
+    for _ in range(count):
         osmid = read_uint(f, 8)
         if tuples:
             osmid = unpack_osmid(osmid)
@@ -65,7 +63,7 @@ def _read_osm2ft_v0(f, ft2osm, tuples):
 def _read_osm2ft_v1(f, ft2osm, tuples):
     count = read_varuint(f)
     result = {}
-    for i in range(count):
+    for _ in range(count):
         osmid = read_uint(f, 8)
         # V1 use complex ids. Here we want to skip second part of complex id
         # to save old interface osm2ft.
@@ -101,8 +99,8 @@ def ft2osm(path, ftid):
     with open(path, "rb") as f:
         ft2osm = read_osm2ft(f, ft2osm=True)
 
-    type_abbr = {"n": "node", "w": "way", "r": "relation"}
     ftid = int(ftid)
     if ftid in ft2osm:
+        type_abbr = {"n": "node", "w": "way", "r": "relation"}
         return f"https://www.openstreetmap.org/{type_abbr[ft2osm[ftid][0]]}/{ft2osm[ftid][1]}"
     return None

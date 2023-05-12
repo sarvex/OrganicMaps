@@ -87,7 +87,7 @@ class StringsTxt:
                 if self.TRANSLATION.match(line):
                     lang, tran = self._parse_lang_and_translation(line)
 
-                    if lang == "comment" or lang == "tags" or lang == "ref":
+                    if lang in ["comment", "tags", "ref"]:
                         self.comments_tags_refs[current_key][lang] = tran
                         continue
 
@@ -145,7 +145,9 @@ class StringsTxt:
             print("{0:7} : {1} / {2} ({3}%)".format(
                 lang, lang_stat, n_trans, round(100 * lang_stat / n_trans)
             ))
-            if print_plurals and not (len(plurals_stats[lang]) == 1 and lang in plurals_stats[lang]):
+            if print_plurals and (
+                len(plurals_stats[lang]) != 1 or lang not in plurals_stats[lang]
+            ):
                 for lang_plural, plural_stat in plurals_stats[lang].items():
                     print("    {0:13} : {1}".format(lang_plural, plural_stat))
 
@@ -263,11 +265,11 @@ class StringsTxt:
 
     def _populate_translations_by_langs(self):
         for lang in self.all_langs:
-            trans_for_lang = {}
-            for key, tran in self.translations.items():  # (tran = dict<lang, translation>)
-                if lang not in tran:
-                    continue
-                trans_for_lang[key] = tran[lang]
+            trans_for_lang = {
+                key: tran[lang]
+                for key, tran in self.translations.items()
+                if lang in tran
+            }
             self.translations_by_language[lang] = trans_for_lang
 
     def _find_duplicates(self):
@@ -299,7 +301,7 @@ class StringsTxt:
         self._print_header("Most duplicated")
         print("Definitions with the most translations shared with other definitions:\n")
         for pair in self.most_duplicated:
-            print("{}\t{}".format(pair[0], pair[1]))
+            print(f"{pair[0]}\t{pair[1]}")
 
     def print_missing_translations(self, langs=None):
         self._print_header("Untranslated definitions")
@@ -371,15 +373,11 @@ class StringsTxt:
 
         common_keys = set(block_1.keys()).intersection(set(block_2))
 
-        common_elements = 0
-        for key in common_keys:
-            if block_1[key] == block_2[key]:
-                common_elements += 1
-
+        common_elements = sum(1 for key in common_keys if block_1[key] == block_2[key])
         sim_index = round(100 * 2 * common_elements /
                           (len(block_1) + len(block_2)))
         if sim_index >= self.SIMILARITY_THRESHOLD:
-            return [("{} <-> {}".format(key_1, key_2), sim_index)]
+            return [(f"{key_1} <-> {key_2}", sim_index)]
         return []
 
     def _find_most_similar(self):
@@ -395,7 +393,7 @@ class StringsTxt:
         self._print_header("Most similar definitions")
         print("Definitions most similar to other definitions, i.e. with a lot of same translations:\n")
         for index in self.similarity_indices:
-            print("{} : {}%".format(index[0], index[1]))
+            print(f"{index[0]} : {index[1]}%")
 
     def _print_header(self, string):
         # print headers in green colour
@@ -414,11 +412,7 @@ class StringsTxt:
         print("\033[0;31mERROR: {0}\033[0m".format(issue))
 
     def _has_space_before_punctuation(self, lang, string):
-        if lang == "fr":  # make exception for French
-            return False
-        if self.SPACE_PUNCTUATION.search(string):
-            return True
-        return False
+        return False if lang == "fr" else bool(self.SPACE_PUNCTUATION.search(string))
 
     def print_strings_with_spaces_before_punctuation(self, langs=None):
         self._print_header("Strings with spaces before punctuation")
@@ -426,13 +420,14 @@ class StringsTxt:
         for key, lang_and_trans in self.translations.items():
             wrote_key = False
             for lang, translation in lang_and_trans.items():
-                if lang in langs:
-                    if self._has_space_before_punctuation(lang, translation):
-                        if not wrote_key:
-                            print("\n{}".format(key))
-                            wrote_key = True
-                        self._print_validation_issue(
-                            "{0} : {1}".format(lang, translation), warning=True)
+                if lang in langs and self._has_space_before_punctuation(
+                    lang, translation
+                ):
+                    if not wrote_key:
+                        print(f"\n{key}")
+                        wrote_key = True
+                    self._print_validation_issue(
+                        "{0} : {1}".format(lang, translation), warning=True)
 
     def _check_placeholders_in_block(self, block_key, langs):
         wrong_placeholders_strings = []
@@ -444,18 +439,16 @@ class StringsTxt:
                     break
                 en_lang = "en:{0}".format(plural_key)
                 en_trans = self.translations[block_key].get(en_lang)
-            if not en_trans:
-                self._print_validation_issue(
-                    "No English for definition: {}".format(block_key))
-                return None, wrong_placeholders_strings
+        if not en_trans:
+            self._print_validation_issue(f"No English for definition: {block_key}")
+            return None, wrong_placeholders_strings
 
         en_placeholders = sorted(self.PLACEHOLDERS.findall(en_trans))
 
         for lang, translation in self.translations[block_key].items():
             found = sorted(self.PLACEHOLDERS.findall(translation))
-            if not en_placeholders == found:  # must be sorted
-                wrong_placeholders_strings.append(
-                    "{} = {}".format(lang, translation))
+            if en_placeholders != found:  # must be sorted
+                wrong_placeholders_strings.append(f"{lang} = {translation}")
 
         return en_lang, wrong_placeholders_strings
 
@@ -488,8 +481,7 @@ class StringsTxt:
 def find_project_root():
     my_path = abspath(__file__)
     tools_index = my_path.rfind("/tools/python")
-    project_root = my_path[:tools_index]
-    return project_root
+    return my_path[:tools_index]
 
 
 def get_args():
@@ -624,16 +616,12 @@ if __name__ == "__main__":
     if args.print_missing:
         strings.print_missing_translations(langs=args.langs)
 
-    if args.validate:
-        if not strings.validate(langs=args.langs):
-            # print in red color
-            print("\n\033[0;31mThe file is not valid, terminating\033[0m")
-            sys.exit(1)
+    if args.validate and not strings.validate(langs=args.langs):
+        # print in red color
+        print("\n\033[0;31mThe file is not valid, terminating\033[0m")
+        sys.exit(1)
 
     if args.output:
-        if args.output == True:
-            args.output = args.input
-        else:
-            args.output = abspath(args.output)
+        args.output = args.input if args.output == True else abspath(args.output)
         print("\nWriting formatted output file: {0}\n".format(args.output))
         strings.write_formatted(target_file=args.output, langs=args.langs, keep_resolved=args.keep_resolved)

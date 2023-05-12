@@ -5,8 +5,8 @@ import os
 path = os.path.join(os.path.dirname(sys.argv[0]), '..', '..', 'data', 'categories.txt')
 if len(sys.argv) < 2:
     print('Merges some language in categories.txt with English')
-    print('Usage: {} <lang> [path_to_categories.txt]'.format(sys.argv[0]))
-    print('Default path to categories: {}'.format(path))
+    print(f'Usage: {sys.argv[0]} <lang> [path_to_categories.txt]')
+    print(f'Default path to categories: {path}')
     if not os.path.exists(path):
         print('Warning: default path to categories.txt will fail')
     sys.exit(1)
@@ -23,7 +23,7 @@ with open(path, 'r') as f:
         for lang in langs:
             if trans and l[0] == 'en':
                 parts = lang[1].split('|')
-                parts[0] = '{} - {}'.format(parts[0], trans)
+                parts[0] = f'{parts[0]} - {trans}'
                 lang[1] = '|'.join(parts)
             print(':'.join(lang))
 

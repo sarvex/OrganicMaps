@@ -17,13 +17,14 @@ def find_features(path: str, typ: str, string: str) -> List[Feature]:
                 if string in value:
                     found = True
                     break
-        elif typ in ("t", "et"):
+        elif typ in {"t", "et"}:
             for t in feature.types():
                 readable_type_ = readable_type(t)
-                if readable_type_ == string:
-                    found = True
-                    break
-                elif typ == "t" and string in readable_type_:
+                if (
+                    readable_type_ == string
+                    or typ == "t"
+                    and string in readable_type_
+                ):
                     found = True
                     break
         elif typ == "m":

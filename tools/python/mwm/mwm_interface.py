@@ -382,14 +382,9 @@ class Feature(ABC):
         )
 
     def to_json(self):
-        center = None
-        center_ = self.center()
-        if center_:
-            center = self.center().to_json()
-
+        center = self.center().to_json() if (center_ := self.center()) else None
         limit_rect = None
-        limit_rect_ = self.limit_rect()
-        if limit_rect_:
+        if limit_rect_ := self.limit_rect():
             limit_rect = limit_rect_.to_json()
 
         return {

@@ -121,7 +121,7 @@ class Stages:
         # We normalize self.dependencies to Dict[Type[Stage], Set[Type[Stage]]].
         dependencies = defaultdict(set)
         for k, v in self.dependencies.items():
-            dependencies[get_stage_type(k)] = set(get_stage_type(x) for x in v)
+            dependencies[get_stage_type(k)] = {get_stage_type(x) for x in v}
         self.dependencies = dependencies
 
     def set_mwm_stage(self, stage: Type[Stage]):

@@ -185,11 +185,7 @@ def main():
     without_countries_line = ""
     if "COUNTRIES" in os.environ:
         countries_line = os.environ["COUNTRIES"]
-    if options.countries:
-        countries_line = options.countries
-    else:
-        countries_line = "*"
-
+    countries_line = options.countries if options.countries else "*"
     if options.without_countries:
         without_countries_line = options.without_countries
 
@@ -267,13 +263,14 @@ def main():
     if settings.PLANET_URL != settings.DEFAULT_PLANET_URL:
         skipped_stages.add(sd.StageUpdatePlanet)
 
-    if sd.StageCoastline in skipped_stages:
-        if any(x in WORLDS_NAMES for x in options.countries):
-            raise SkipError(
-                f"You can not skip {stages.get_stage_name(sd.StageCoastline)}"
-                f" if you want to generate {WORLDS_NAMES}."
-                f" You can exclude them with --without_countries option."
-            )
+    if sd.StageCoastline in skipped_stages and any(
+        x in WORLDS_NAMES for x in options.countries
+    ):
+        raise SkipError(
+            f"You can not skip {stages.get_stage_name(sd.StageCoastline)}"
+            f" if you want to generate {WORLDS_NAMES}."
+            f" You can exclude them with --without_countries option."
+        )
 
     if not settings.NEED_PLANET_UPDATE:
         skipped_stages.add(sd.StageUpdatePlanet)

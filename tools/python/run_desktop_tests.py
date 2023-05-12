@@ -197,7 +197,7 @@ class TestRunner:
         self.print_pretty("skipped", categorized_tests[SKIP])
         self.print_pretty("passed", results[PASSED])
         self.print_pretty("not found", categorized_tests[NOT_FOUND])
-        return len(results[FAILED]) > 0 and 1 or 0
+        return 1 if len(results[FAILED]) > 0 else 0
 
 def tests_on_disk(path):
     return list(filter(lambda x: x.endswith("_tests"), listdir(path)))
